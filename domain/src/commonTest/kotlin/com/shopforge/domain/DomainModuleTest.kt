@@ -1,4 +1,4 @@
-package dev.lievens.shopforge.domain
+package com.shopforge.domain
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

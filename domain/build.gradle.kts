@@ -8,7 +8,7 @@ kotlin {
     jvm()
 
     android {
-        namespace = "dev.lievens.shopforge.domain"
+        namespace = "com.shopforge.domain"
         compileSdk = 36
         minSdk = 26
         compilerOptions {

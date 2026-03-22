@@ -1,4 +1,4 @@
-package dev.lievens.shopforge.data
+package com.shopforge.data
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

@@ -1,4 +1,4 @@
-package dev.lievens.shopforge
+package com.shopforge
 
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

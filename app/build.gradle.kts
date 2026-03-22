@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "dev.lievens.shopforge"
+    namespace = "com.shopforge"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.lievens.shopforge"
+        applicationId = "com.shopforge"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

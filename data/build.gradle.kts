@@ -9,7 +9,7 @@ kotlin {
     jvm()
 
     android {
-        namespace = "dev.lievens.shopforge.data"
+        namespace = "com.shopforge.data"
         compileSdk = 36
         minSdk = 26
         compilerOptions {
@@ -48,7 +48,7 @@ kotlin {
 sqldelight {
     databases {
         create("ShopForgeDatabase") {
-            packageName.set("dev.lievens.shopforge.data.db")
+            packageName.set("com.shopforge.data.db")
             srcDirs.setFrom("src/commonMain/sqldelight")
         }
     }

@@ -1,4 +1,4 @@
-package dev.lievens.shopforge.ui.theme
+package com.shopforge.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
