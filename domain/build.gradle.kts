@@ -7,13 +7,10 @@ kotlin {
     // V1 targets: JVM (for unit tests) and Android
     jvm()
 
-    android {
+    androidLibrary {
         namespace = "com.shopforge.domain"
         compileSdk = 36
         minSdk = 26
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
     }
 
     // Structured for future iOS/Web targets:

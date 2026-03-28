@@ -1,11 +1,10 @@
 [versions]
 # Build tooling
-agp = "9.1.0"
+agp = "9.0.1"
 kotlin = "2.3.20"
-gradle = "9.3.1"
 
 # AndroidX / Compose
-composeBom = "2026.03.00"
+composeBom = "2026.03.01"
 activityCompose = "1.13.0"
 navigationCompose = "2.9.7"
 
@@ -19,8 +18,8 @@ sqldelight = "2.3.2"
 metro = "0.11.4"
 
 # Testing
-junit = "5.12.1"
-turbine = "1.2.0"
+junit = "6.0.3"
+turbine = "1.2.1"
 
 [libraries]
 # Kotlin Coroutines
@@ -55,7 +54,7 @@ metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-comp
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
 kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
-junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "1.12.1" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "6.0.3" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 [plugins]

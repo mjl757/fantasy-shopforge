@@ -25,12 +25,9 @@ kotlin {
     // V1: JVM target for desktop unit tests
     jvm()
 
-    android {
+    androidLibrary {
         compileSdk = 36
-        minSdk = 26
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
+        minSdk = 30
     }
 
     // Future targets (uncomment when adding iOS/Web support):
@@ -38,4 +35,10 @@ kotlin {
     // iosSimulatorArm64()
     // iosX64()
     // js(IR) { browser(); nodejs() }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
