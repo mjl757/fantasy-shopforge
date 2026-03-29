@@ -53,7 +53,7 @@ class GenerateInventoryUseCase(
             Rarity.Rare to 10,
             Rarity.VeryRare to 4,
             Rarity.Legendary to 1,
-        )
+        ).also { check(it.values.sum() == 100) { "Rarity weights must sum to 100" } }
     }
 
     /**
@@ -63,7 +63,7 @@ class GenerateInventoryUseCase(
      * @param random A [Random] instance for testability (use a seeded Random for deterministic tests).
      * @return A list of [ShopInventoryItem] representing the shop's generated inventory.
      */
-    suspend fun invoke(shopType: ShopType, random: Random = Random): List<ShopInventoryItem> {
+    suspend operator fun invoke(shopType: ShopType, random: Random = Random): List<ShopInventoryItem> {
         // 1. Determine inventory size
         val inventorySize = random.nextInt(MIN_INVENTORY_SIZE, MAX_INVENTORY_SIZE + 1)
 
