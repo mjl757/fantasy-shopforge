@@ -10,150 +10,82 @@ import kotlin.math.roundToLong
 import kotlin.random.Random
 
 /**
- * Generates a randomized inventory for a shop of a given [ShopType].
+ * Generates an inventory (8-15 items) for a given [ShopType] from the item catalog.
  *
- * Generation rules:
- * - Inventory size: 8-15 items (randomly determined)
- * - Items filtered by the shop type's [ShopType.defaultCategories]
- * - Rarity distribution: 70% Common, 15% Uncommon, 10% Rare, 4% Very Rare, 1% Legendary
- * - Price variance: +/-10% from the base catalog price, rounded to nearest denomination
- * - No duplicate items in a single inventory
- * - Quantity: random (1-10) or null (unlimited stock)
+ * Applies rarity distribution (70/15/10/4/1) and price variance (plus or minus 10%).
  */
-open class GenerateInventoryUseCase(
+class GenerateInventoryUseCase(
     private val itemRepository: ItemRepository,
+    private val random: Random = Random.Default,
 ) {
 
-    private companion object {
-        const val MIN_INVENTORY_SIZE = 8
-        const val MAX_INVENTORY_SIZE = 15
-        const val MIN_QUANTITY = 1
-        const val MAX_QUANTITY = 10
-        const val UNLIMITED_STOCK_CHANCE = 0.2
-        const val PRICE_VARIANCE_FRACTION = 0.10
+    suspend operator fun invoke(shopType: ShopType): List<ShopInventoryItem> {
+        // Collect all candidate items matching the shop type's categories
+        val candidates = shopType.defaultCategories.flatMap { category ->
+            itemRepository.getItemsByCategory(category)
+        }.distinctBy { it.id }
 
-        val RARITY_WEIGHTS: Map<Rarity, Int> = mapOf(
-            Rarity.Common to 70,
-            Rarity.Uncommon to 15,
-            Rarity.Rare to 10,
-            Rarity.VeryRare to 4,
-            Rarity.Legendary to 1,
-        ).also { check(it.values.sum() == 100) { "Rarity weights must sum to 100" } }
-    }
+        if (candidates.isEmpty()) return emptyList()
 
-    /**
-     * Generates an inventory for the given [shopType].
-     *
-     * @param shopType The type of shop to generate inventory for.
-     * @param random A [Random] instance for testability (use a seeded Random for deterministic tests).
-     * @return A list of [ShopInventoryItem] representing the shop's generated inventory.
-     */
-    open suspend operator fun invoke(shopType: ShopType, random: Random = Random): List<ShopInventoryItem> {
-        // 1. Determine inventory size
-        val inventorySize = random.nextInt(MIN_INVENTORY_SIZE, MAX_INVENTORY_SIZE + 1)
+        val inventorySize = random.nextInt(MIN_INVENTORY, MAX_INVENTORY + 1)
 
-        // 2. Fetch catalog items for this shop type's categories
-        val candidateItems = shopType.defaultCategories
-            .flatMap { category -> itemRepository.getItemsByCategory(category) }
-            .distinctBy { it.id }
+        // Select items respecting rarity distribution, no duplicates
+        val selected = selectItems(candidates, inventorySize)
 
-        if (candidateItems.isEmpty()) return emptyList()
-
-        // 3. Group candidates by rarity for weighted selection
-        val itemsByRarity = candidateItems.groupBy { it.rarity }
-
-        // 4. Select items with rarity distribution, no duplicates
-        val selectedItems = selectItems(
-            itemsByRarity = itemsByRarity,
-            candidateItems = candidateItems,
-            targetSize = inventorySize.coerceAtMost(candidateItems.size),
-            random = random,
-        )
-
-        // 5. Build inventory items with price variance and quantity
-        return selectedItems.map { item ->
+        return selected.map { item ->
             ShopInventoryItem(
                 item = item,
-                quantity = generateQuantity(random),
-                adjustedPrice = applyPriceVariance(item.price, random),
+                quantity = generateQuantity(),
+                adjustedPrice = applyPriceVariance(item.price),
             )
         }
     }
 
-    /**
-     * Selects items respecting rarity distribution weights.
-     * Falls back to random selection from all candidates if the target rarity bucket is empty.
-     */
-    private fun selectItems(
-        itemsByRarity: Map<Rarity, List<Item>>,
-        candidateItems: List<Item>,
-        targetSize: Int,
-        random: Random,
-    ): List<Item> {
-        val selected = mutableSetOf<Long>() // track by ID to avoid duplicates
-        val result = mutableListOf<Item>()
+    private fun selectItems(candidates: List<Item>, count: Int): List<Item> {
+        val selected = mutableListOf<Item>()
+        val usedIds = mutableSetOf<Long>()
 
-        repeat(targetSize) {
-            val targetRarity = rollRarity(random)
+        repeat(count) {
+            val targetRarity = rollRarity()
+            // Try to find a candidate matching the target rarity that hasn't been selected
+            val candidate = candidates
+                .filter { it.rarity == targetRarity && it.id !in usedIds }
+                .randomOrNull(random)
+            // Fallback to any unselected candidate if no match
+                ?: candidates.filter { it.id !in usedIds }.randomOrNull(random)
+                ?: return selected // No more candidates available
 
-            // Try to pick from the target rarity bucket, excluding already-selected items
-            val bucket = itemsByRarity[targetRarity]
-                ?.filter { it.id !in selected }
-
-            val item = if (!bucket.isNullOrEmpty()) {
-                bucket[random.nextInt(bucket.size)]
-            } else {
-                // Fallback: pick from any remaining candidate
-                val remaining = candidateItems.filter { it.id !in selected }
-                if (remaining.isEmpty()) return result
-                remaining[random.nextInt(remaining.size)]
-            }
-
-            selected.add(item.id)
-            result.add(item)
+            selected.add(candidate)
+            usedIds.add(candidate.id)
         }
-
-        return result
+        return selected
     }
 
-    /**
-     * Rolls a rarity based on the defined distribution weights.
-     */
-    private fun rollRarity(random: Random): Rarity {
-        val roll = random.nextInt(100) // 0-99
-        var cumulative = 0
-        for ((rarity, weight) in RARITY_WEIGHTS) {
-            cumulative += weight
-            if (roll < cumulative) return rarity
+    private fun rollRarity(): Rarity {
+        val roll = random.nextInt(100)
+        return when {
+            roll < 70 -> Rarity.Common
+            roll < 85 -> Rarity.Uncommon
+            roll < 95 -> Rarity.Rare
+            roll < 99 -> Rarity.VeryRare
+            else -> Rarity.Legendary
         }
-        // Should not be reached given weights sum to 100, but default to Common
-        return Rarity.Common
     }
 
-    /**
-     * Applies +/-10% price variance to the base price.
-     * The result is rounded to the nearest copper piece (minimum 1 CP).
-     */
-    private fun applyPriceVariance(basePrice: Price, random: Random): Price {
+    private fun generateQuantity(): Int? {
+        // 20% chance of unlimited stock, otherwise 1-10
+        return if (random.nextInt(5) == 0) null else random.nextInt(1, 11)
+    }
+
+    private fun applyPriceVariance(basePrice: Price): Price {
         if (basePrice.copperPieces == 0L) return basePrice
-
-        // Generate a variance factor between -0.10 and +0.10
-        val varianceFactor = (random.nextDouble() * 2 * PRICE_VARIANCE_FRACTION) - PRICE_VARIANCE_FRACTION
-        val adjustedCp = (basePrice.copperPieces * (1.0 + varianceFactor)).roundToLong()
-
-        // Ensure minimum price of 1 CP
-        return Price(adjustedCp.coerceAtLeast(1L))
+        val variance = 1.0 + (random.nextDouble() * 0.2 - 0.1) // -10% to +10%
+        val adjusted = (basePrice.copperPieces * variance).roundToLong().coerceAtLeast(1L)
+        return Price(adjusted)
     }
 
-    /**
-     * Generates a random quantity for an inventory item.
-     * Has a [UNLIMITED_STOCK_CHANCE] chance of returning null (unlimited stock).
-     */
-    private fun generateQuantity(random: Random): Int? {
-        return if (random.nextDouble() < UNLIMITED_STOCK_CHANCE) {
-            null
-        } else {
-            random.nextInt(MIN_QUANTITY, MAX_QUANTITY + 1)
-        }
+    companion object {
+        const val MIN_INVENTORY = 8
+        const val MAX_INVENTORY = 15
     }
 }

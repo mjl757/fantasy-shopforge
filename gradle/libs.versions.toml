@@ -8,6 +8,7 @@ composeBom = "2026.03.01"
 activityCompose = "1.13.0"
 lifecycleViewmodel = "2.9.2"
 navigationCompose = "2.9.7"
+lifecycleViewmodelCompose = "2.9.1"
 
 # Kotlin
 coroutines = "1.10.2"
@@ -41,6 +42,7 @@ compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-icons-core = { module = "androidx.compose.material:material-icons-core" }
 compose-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 
 # AndroidX
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -48,6 +50,7 @@ androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmode
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleViewmodel" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodel" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 
 # SQLDelight
 sqldelight-gradle-plugin = { module = "app.cash.sqldelight:gradle-plugin", version.ref = "sqldelight" }

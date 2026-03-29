@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.compose.icons.core)
     implementation(libs.compose.icons.extended)
     implementation(libs.compose.runtime)
+    implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 
     // AndroidX
@@ -78,6 +79,9 @@ dependencies {
 
     // SQLDelight Android driver (needed to create AndroidSqliteDriver in DI)
     implementation(libs.sqldelight.android.driver)
+
+    // AndroidX Lifecycle (ViewModel)
+    implementation(libs.androidx.lifecycle.viewmodel)
 
     // Testing
     testImplementation(libs.junit.jupiter)

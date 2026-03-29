@@ -8,6 +8,7 @@ import com.shopforge.domain.repository.ShopRepository
 class DeleteShopUseCase(
     private val shopRepository: ShopRepository,
 ) {
+
     suspend operator fun invoke(shopId: Long) {
         shopRepository.deleteShop(shopId)
     }
