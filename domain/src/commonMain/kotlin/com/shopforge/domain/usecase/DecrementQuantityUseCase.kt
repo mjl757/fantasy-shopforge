@@ -1,15 +1,13 @@
 package com.shopforge.domain.usecase
 
 import com.shopforge.domain.repository.ShopRepository
-import kotlinx.coroutines.flow.first
 
 /**
- * Decrements an item's quantity by 1 in a shop's inventory.
+ * Decrements the quantity of an item in a shop's inventory by 1.
  *
- * Business rules:
- * - Null quantity (unlimited stock) is a no-op.
- * - Quantity at 0 (sold out) is a no-op.
- * - Otherwise, quantity is decremented by 1.
+ * This is a no-op when:
+ * - The item has unlimited stock (null quantity)
+ * - The item is already sold out (quantity == 0)
  */
 class DecrementQuantityUseCase(
     private val shopRepository: ShopRepository,
@@ -17,24 +15,12 @@ class DecrementQuantityUseCase(
     /**
      * @param shopId The shop containing the item.
      * @param itemId The item whose quantity to decrement.
+     * @param currentQuantity The current quantity of the item (null = unlimited).
      */
-    suspend operator fun invoke(shopId: Long, itemId: Long) {
-        val inventory = shopRepository.getInventory(shopId).first()
-        val inventoryItem = inventory.find { it.item.id == itemId } ?: return
+    suspend operator fun invoke(shopId: Long, itemId: Long, currentQuantity: Int?) {
+        // No-op for unlimited stock or already sold out
+        if (currentQuantity == null || currentQuantity <= 0) return
 
-        val currentQuantity = inventoryItem.quantity
-
-        // Unlimited stock (null) -> no-op
-        if (currentQuantity == null) return
-
-        // Already sold out (0) -> no-op
-        if (currentQuantity <= 0) return
-
-        // Decrement by 1
-        shopRepository.updateItemQuantity(
-            shopId = shopId,
-            itemId = itemId,
-            quantity = currentQuantity - 1,
-        )
+        shopRepository.updateItemQuantity(shopId, itemId, currentQuantity - 1)
     }
 }

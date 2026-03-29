@@ -1,97 +1,73 @@
 package com.shopforge.domain.usecase
 
-import com.shopforge.domain.model.ShopType
+import com.shopforge.domain.model.Item
+import com.shopforge.domain.model.Price
+import com.shopforge.domain.model.Shop
+import com.shopforge.domain.model.ShopInventoryItem
+import com.shopforge.domain.repository.ShopRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlinx.coroutines.test.runTest
+import kotlin.test.assertTrue
 
 class DecrementQuantityUseCaseTest {
 
-    private val repository = FakeShopRepository()
-    private val createUseCase = CreateShopUseCase(repository, clock = { TestFixtures.FIXED_TIME })
-    private val addItemUseCase = AddItemToShopUseCase(repository)
+    private val updateCalls = mutableListOf<Triple<Long, Long, Int?>>()
+
+    private val repository = object : ShopRepository {
+        override fun getAllShops(): Flow<List<Shop>> = throw NotImplementedError()
+        override fun getShopById(id: Long): Flow<Shop?> = throw NotImplementedError()
+        override fun getInventory(shopId: Long): Flow<List<ShopInventoryItem>> = throw NotImplementedError()
+        override suspend fun createShop(shop: Shop): Long = throw NotImplementedError()
+        override suspend fun updateShop(shop: Shop) = throw NotImplementedError()
+        override suspend fun deleteShop(id: Long) = throw NotImplementedError()
+        override suspend fun addItemToShop(shopId: Long, item: Item, quantity: Int?, adjustedPrice: Price) =
+            throw NotImplementedError()
+        override suspend fun removeItemFromShop(shopId: Long, itemId: Long) = throw NotImplementedError()
+        override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {
+            updateCalls.add(Triple(shopId, itemId, quantity))
+        }
+        override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) =
+            throw NotImplementedError()
+    }
+
     private val useCase = DecrementQuantityUseCase(repository)
 
     @Test
-    fun `decrements quantity by 1`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
-        val item = TestFixtures.sampleItem(id = 1L)
-        addItemUseCase(shopId, item, 5, item.price)
+    fun decrementsFiniteQuantity() = runTest {
+        useCase(shopId = 1L, itemId = 10L, currentQuantity = 5)
 
-        useCase(shopId, item.id)
-
-        val inventory = repository.getInventorySnapshot(shopId)
-        assertEquals(4, inventory[0].quantity)
+        assertEquals(1, updateCalls.size)
+        assertEquals(Triple(1L, 10L, 4), updateCalls[0])
     }
 
     @Test
-    fun `decrements from 1 to 0`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
-        val item = TestFixtures.sampleItem(id = 1L)
-        addItemUseCase(shopId, item, 1, item.price)
+    fun decrementsToZero() = runTest {
+        useCase(shopId = 1L, itemId = 10L, currentQuantity = 1)
 
-        useCase(shopId, item.id)
-
-        val inventory = repository.getInventorySnapshot(shopId)
-        assertEquals(0, inventory[0].quantity)
+        assertEquals(1, updateCalls.size)
+        assertEquals(Triple(1L, 10L, 0), updateCalls[0])
     }
 
     @Test
-    fun `quantity 0 is a no-op`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
-        val item = TestFixtures.sampleItem(id = 1L)
-        addItemUseCase(shopId, item, 0, item.price)
+    fun noOpForUnlimitedStock() = runTest {
+        useCase(shopId = 1L, itemId = 10L, currentQuantity = null)
 
-        useCase(shopId, item.id)
-
-        val inventory = repository.getInventorySnapshot(shopId)
-        assertEquals(0, inventory[0].quantity)
+        assertTrue(updateCalls.isEmpty())
     }
 
     @Test
-    fun `unlimited stock (null quantity) is a no-op`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Tavern)
-        val item = TestFixtures.sampleItem(id = 1L)
-        addItemUseCase(shopId, item, null, item.price)
+    fun noOpForSoldOut() = runTest {
+        useCase(shopId = 1L, itemId = 10L, currentQuantity = 0)
 
-        useCase(shopId, item.id)
-
-        val inventory = repository.getInventorySnapshot(shopId)
-        assertNull(inventory[0].quantity)
+        assertTrue(updateCalls.isEmpty())
     }
 
     @Test
-    fun `nonexistent item is a no-op`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
+    fun noOpForNegativeQuantity() = runTest {
+        useCase(shopId = 1L, itemId = 10L, currentQuantity = -1)
 
-        useCase(shopId, 999L) // Should complete without error
-    }
-
-    @Test
-    fun `multiple decrements work correctly`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
-        val item = TestFixtures.sampleItem(id = 1L)
-        addItemUseCase(shopId, item, 3, item.price)
-
-        useCase(shopId, item.id) // 3 -> 2
-        useCase(shopId, item.id) // 2 -> 1
-        useCase(shopId, item.id) // 1 -> 0
-
-        val inventory = repository.getInventorySnapshot(shopId)
-        assertEquals(0, inventory[0].quantity)
-    }
-
-    @Test
-    fun `decrement at 0 stays at 0 after multiple calls`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
-        val item = TestFixtures.sampleItem(id = 1L)
-        addItemUseCase(shopId, item, 0, item.price)
-
-        useCase(shopId, item.id)
-        useCase(shopId, item.id)
-
-        val inventory = repository.getInventorySnapshot(shopId)
-        assertEquals(0, inventory[0].quantity)
+        assertTrue(updateCalls.isEmpty())
     }
 }
