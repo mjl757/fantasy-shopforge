@@ -47,6 +47,8 @@ sqldelight {
         create("ShopForgeDatabase") {
             packageName.set("com.shopforge.data.db")
             srcDirs.setFrom("src/commonMain/sqldelight")
+            deriveSchemaFromMigrations.set(true)
+            version = 1
         }
     }
 }

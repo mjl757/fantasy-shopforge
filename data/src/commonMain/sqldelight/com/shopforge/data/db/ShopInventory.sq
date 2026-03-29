@@ -1,0 +1,30 @@
+-- Queries for the ShopInventory join table.
+
+-- Select all inventory entries for a given shop, joined with item details.
+selectByShopId:
+SELECT ShopInventory.*, Item.*
+FROM ShopInventory
+INNER JOIN Item ON ShopInventory.itemId = Item.id
+WHERE ShopInventory.shopId = ?
+ORDER BY Item.name ASC;
+
+-- Insert a new inventory entry for a shop.
+insertItem:
+INSERT OR REPLACE INTO ShopInventory(shopId, itemId, quantity, adjustedPrice)
+VALUES (?, ?, ?, ?);
+
+-- Remove a specific item from a shop's inventory.
+removeItem:
+DELETE FROM ShopInventory
+WHERE shopId = ? AND itemId = ?;
+
+-- Update the quantity of an item in a shop's inventory.
+updateQuantity:
+UPDATE ShopInventory
+SET quantity = ?
+WHERE shopId = ? AND itemId = ?;
+
+-- Delete all inventory entries for a given shop.
+deleteByShopId:
+DELETE FROM ShopInventory
+WHERE shopId = ?;

@@ -1,0 +1,39 @@
+-- Queries for the Item table.
+
+-- Select all items, ordered by name.
+selectAll:
+SELECT *
+FROM Item
+ORDER BY name ASC;
+
+-- Select a single item by id.
+selectById:
+SELECT *
+FROM Item
+WHERE id = ?;
+
+-- Select items by category (type column).
+selectByCategory:
+SELECT *
+FROM Item
+WHERE type = ?
+ORDER BY name ASC;
+
+-- Select items by rarity.
+selectByRarity:
+SELECT *
+FROM Item
+WHERE rarity = ?
+ORDER BY name ASC;
+
+-- Search items by name (case-insensitive).
+searchByName:
+SELECT *
+FROM Item
+WHERE name LIKE '%' || ? || '%'
+ORDER BY name ASC;
+
+-- Insert a new item. Returns the generated id via lastInsertRowId().
+insert:
+INSERT INTO Item(name, description, type, price, rarity, isCustom)
+VALUES (?, ?, ?, ?, ?, ?);
