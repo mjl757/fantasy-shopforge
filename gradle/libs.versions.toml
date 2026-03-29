@@ -10,6 +10,7 @@ navigationCompose = "2.9.7"
 
 # Kotlin
 coroutines = "1.10.2"
+serialization = "1.8.1"
 
 # Data
 sqldelight = "2.3.2"
@@ -26,6 +27,9 @@ turbine = "1.2.1"
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Kotlin Serialization
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 # Compose BOM
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
@@ -66,3 +70,4 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
