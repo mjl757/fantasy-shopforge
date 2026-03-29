@@ -10,7 +10,7 @@ package com.shopforge.domain.model
  *   1 SP = 10 CP
  *   Therefore: 1 PP = 1000 CP, 1 GP = 100 CP, 1 SP = 10 CP
  */
-data class Price(val copperPieces: Long) {
+data class Price(val copperPieces: Long) : Comparable<Price> {
 
     init {
         require(copperPieces >= 0) { "Price cannot be negative. Got: $copperPieces" }
@@ -68,9 +68,9 @@ data class Price(val copperPieces: Long) {
     fun toGoldDecimal(): Double = copperPieces.toDouble() / CP_PER_GP
 
     operator fun plus(other: Price): Price = Price(copperPieces + other.copperPieces)
-    operator fun minus(other: Price): Price = Price(copperPieces - other.copperPieces)
+    operator fun minus(other: Price): Price = Price(maxOf(0L, copperPieces - other.copperPieces))
     operator fun times(factor: Int): Price = Price(copperPieces * factor)
-    operator fun compareTo(other: Price): Int = copperPieces.compareTo(other.copperPieces)
+    override operator fun compareTo(other: Price): Int = copperPieces.compareTo(other.copperPieces)
 
     override fun toString(): String = format()
 }

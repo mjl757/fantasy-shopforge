@@ -15,6 +15,9 @@ data class ShopInventoryItem(
     val quantity: Int?,
     val adjustedPrice: Price,
 ) {
+    init {
+        require(quantity == null || quantity >= 0) { "Quantity cannot be negative. Got: $quantity" }
+    }
     /** True when the item has a finite quantity of zero. */
     val isSoldOut: Boolean get() = quantity != null && quantity == 0
 
