@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     alias(libs.plugins.metro)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -63,6 +64,9 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // Serialization (required for type-safe Navigation Compose routes)
+    implementation(libs.kotlinx.serialization.json)
 
     // Metro DI
     implementation(libs.metro.runtime)
