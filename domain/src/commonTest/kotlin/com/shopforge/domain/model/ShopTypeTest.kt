@@ -2,8 +2,8 @@ package com.shopforge.domain.model
 
 import kotlin.test.Test
 import kotlin.test.assertContains
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class ShopTypeTest {
 
@@ -83,15 +83,7 @@ class ShopTypeTest {
         ShopType.entries.forEach { shopType ->
             val categories = shopType.defaultCategories
             val unique = categories.toSet()
-            assertTrue(
-                categories.size == unique.size,
-                "${shopType.name} has duplicate default categories",
-            )
+            assertEquals(categories.size, unique.size, "${shopType.name} has duplicate default categories")
         }
-    }
-
-    // kotlin.test does not expose assertEquals at top level in all targets; use assertTrue
-    private fun assertEquals(expected: Int, actual: Int) {
-        assertTrue(expected == actual, "Expected $expected but was $actual")
     }
 }
