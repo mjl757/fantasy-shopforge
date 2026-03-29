@@ -24,29 +24,14 @@ class GenerateInventoryUseCase(
     private val itemRepository: ItemRepository,
 ) {
 
-    companion object {
-        /** Minimum number of items in a generated inventory. */
+    private companion object {
         const val MIN_INVENTORY_SIZE = 8
-
-        /** Maximum number of items in a generated inventory. */
         const val MAX_INVENTORY_SIZE = 15
-
-        /** Minimum quantity assigned to a generated inventory item (when not unlimited). */
         const val MIN_QUANTITY = 1
-
-        /** Maximum quantity assigned to a generated inventory item (when not unlimited). */
         const val MAX_QUANTITY = 10
-
-        /** Chance (0.0-1.0) that a generated item has unlimited stock. */
         const val UNLIMITED_STOCK_CHANCE = 0.2
-
-        /** Price variance fraction (±10%). */
         const val PRICE_VARIANCE_FRACTION = 0.10
 
-        /**
-         * Rarity weights used during item selection.
-         * The weights are cumulative probabilities mapped from a 0-100 roll.
-         */
         val RARITY_WEIGHTS: Map<Rarity, Int> = mapOf(
             Rarity.Common to 70,
             Rarity.Uncommon to 15,
@@ -134,7 +119,7 @@ class GenerateInventoryUseCase(
     /**
      * Rolls a rarity based on the defined distribution weights.
      */
-    internal fun rollRarity(random: Random): Rarity {
+    private fun rollRarity(random: Random): Rarity {
         val roll = random.nextInt(100) // 0-99
         var cumulative = 0
         for ((rarity, weight) in RARITY_WEIGHTS) {
@@ -149,7 +134,7 @@ class GenerateInventoryUseCase(
      * Applies +/-10% price variance to the base price.
      * The result is rounded to the nearest copper piece (minimum 1 CP).
      */
-    internal fun applyPriceVariance(basePrice: Price, random: Random): Price {
+    private fun applyPriceVariance(basePrice: Price, random: Random): Price {
         if (basePrice.copperPieces == 0L) return basePrice
 
         // Generate a variance factor between -0.10 and +0.10
