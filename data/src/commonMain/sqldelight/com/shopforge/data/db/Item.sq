@@ -46,9 +46,18 @@ VALUES (?, ?, ?, ?, ?, ?);
 update:
 UPDATE Item
 SET name = ?, description = ?, type = ?, price = ?, rarity = ?
-WHERE id = ?;
+WHERE id = ? AND isCustom = 1;
 
 -- Delete an item by id.
 delete:
 DELETE FROM Item
 WHERE id = ?;
+
+-- Delete a custom item by id. Only deletes if the item is custom.
+deleteCustom:
+DELETE FROM Item
+WHERE id = ? AND isCustom = 1;
+
+-- Count all items (used for catalog seeding check).
+countAll:
+SELECT COUNT(*) FROM Item;

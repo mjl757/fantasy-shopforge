@@ -38,6 +38,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(libs.sqldelight.sqlite.driver)
             implementation(libs.junit.jupiter)
+            implementation(libs.turbine)
         }
     }
 }
