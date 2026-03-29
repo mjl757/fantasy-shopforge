@@ -37,3 +37,18 @@ ORDER BY name ASC;
 insert:
 INSERT INTO Item(name, description, type, price, rarity, isCustom)
 VALUES (?, ?, ?, ?, ?, ?);
+
+-- Update an existing item's mutable fields.
+update:
+UPDATE Item
+SET name = ?, description = ?, type = ?, price = ?, rarity = ?
+WHERE id = ? AND isCustom = 1;
+
+-- Delete a custom item by id. Only deletes if the item is custom.
+deleteCustom:
+DELETE FROM Item
+WHERE id = ? AND isCustom = 1;
+
+-- Count all items (used for catalog seeding check).
+countAll:
+SELECT COUNT(*) FROM Item;
