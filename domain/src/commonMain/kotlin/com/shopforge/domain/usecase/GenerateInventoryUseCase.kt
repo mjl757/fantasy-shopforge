@@ -2,16 +2,23 @@ package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
+import kotlin.random.Random
 
 /**
- * Generates a randomized inventory for a shop based on its type.
+ * Generates a list of inventory items appropriate for a given [ShopType].
  *
- * This interface is defined here so that [RegenerateInventoryUseCase] can
- * depend on it. The full implementation is provided by issue #4.
+ * This interface is defined here so that [GenerateShopUseCase] and
+ * [RegenerateInventoryUseCase] can depend on it.
+ * The concrete implementation is provided in issue #4.
  */
 interface GenerateInventoryUseCase {
+
     /**
-     * Generates a list of inventory items appropriate for the given [shopType].
+     * Generates inventory items for a shop of the given [shopType].
+     *
+     * @param shopType The type of shop to generate inventory for.
+     * @param random A [Random] instance for deterministic testing.
+     * @return A list of [ShopInventoryItem] for the generated shop.
      */
-    suspend operator fun invoke(shopType: ShopType): List<ShopInventoryItem>
+    suspend operator fun invoke(shopType: ShopType, random: Random = Random): List<ShopInventoryItem>
 }

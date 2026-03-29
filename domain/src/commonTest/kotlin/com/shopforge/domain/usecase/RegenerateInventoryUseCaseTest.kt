@@ -3,6 +3,7 @@ package com.shopforge.domain.usecase
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -32,7 +33,7 @@ class RegenerateInventoryUseCaseTest {
         )
 
         val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> {
+            override suspend fun invoke(shopType: ShopType, random: Random): List<ShopInventoryItem> {
                 assertEquals(ShopType.Blacksmith, shopType)
                 return generatedItems
             }
@@ -53,7 +54,7 @@ class RegenerateInventoryUseCaseTest {
         var capturedType: ShopType? = null
 
         val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> {
+            override suspend fun invoke(shopType: ShopType, random: Random): List<ShopInventoryItem> {
                 capturedType = shopType
                 return emptyList()
             }
@@ -68,7 +69,7 @@ class RegenerateInventoryUseCaseTest {
     @Test
     fun `throws for nonexistent shop`() = runTest {
         val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> =
+            override suspend fun invoke(shopType: ShopType, random: Random): List<ShopInventoryItem> =
                 emptyList()
         }
 
@@ -86,7 +87,7 @@ class RegenerateInventoryUseCaseTest {
         addItemUseCase(shopId, item, 5, item.price)
 
         val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> =
+            override suspend fun invoke(shopType: ShopType, random: Random): List<ShopInventoryItem> =
                 emptyList()
         }
 
