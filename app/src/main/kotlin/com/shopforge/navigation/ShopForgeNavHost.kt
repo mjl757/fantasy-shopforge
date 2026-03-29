@@ -55,7 +55,8 @@ fun ShopForgeNavHost(
             CreateShopScreen(
                 onShopCreated = { shopId ->
                     navController.navigate(AppRoute.ShopDetail(shopId)) {
-                        popUpTo(AppRoute.ShopList)
+                        popUpTo(AppRoute.ShopList) { inclusive = false }
+                        launchSingleTop = true
                     }
                 },
                 onBack = { navController.popBackStack() },
@@ -78,7 +79,8 @@ fun ShopForgeNavHost(
             GenerateShopScreen(
                 onShopGenerated = { shopId ->
                     navController.navigate(AppRoute.ShopDetail(shopId)) {
-                        popUpTo(AppRoute.ShopList)
+                        popUpTo(AppRoute.ShopList) { inclusive = false }
+                        launchSingleTop = true
                     }
                 },
                 onBack = { navController.popBackStack() },
