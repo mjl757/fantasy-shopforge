@@ -1,0 +1,30 @@
+-- V1: Initial schema for Fantasy ShopForge.
+
+CREATE TABLE Shop(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    description TEXT,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+CREATE TABLE Item(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    type TEXT NOT NULL,
+    price INTEGER NOT NULL,
+    rarity TEXT NOT NULL,
+    isCustom INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE ShopInventory(
+    shopId INTEGER NOT NULL,
+    itemId INTEGER NOT NULL,
+    quantity INTEGER,
+    adjustedPrice INTEGER NOT NULL,
+    PRIMARY KEY(shopId, itemId),
+    FOREIGN KEY(shopId) REFERENCES Shop(id) ON DELETE CASCADE,
+    FOREIGN KEY(itemId) REFERENCES Item(id)
+);
