@@ -78,6 +78,9 @@ dependencies {
     // SQLDelight Android driver (needed to create AndroidSqliteDriver in DI)
     implementation(libs.sqldelight.android.driver)
 
+    // Lifecycle ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0")
+
     // Testing
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
