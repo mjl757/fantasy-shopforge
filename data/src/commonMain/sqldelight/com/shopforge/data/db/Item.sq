@@ -33,6 +33,10 @@ FROM Item
 WHERE name LIKE '%' || ? || '%'
 ORDER BY name ASC;
 
+-- Count catalog (non-custom) items.
+countCatalogItems:
+SELECT COUNT(*) FROM Item WHERE isCustom = 0;
+
 -- Insert a new item. Returns the generated id via lastInsertRowId().
 insert:
 INSERT INTO Item(name, description, type, price, rarity, isCustom)
