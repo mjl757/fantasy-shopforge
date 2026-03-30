@@ -4,19 +4,13 @@ import com.shopforge.domain.model.Shop
 import com.shopforge.domain.model.ShopType
 import com.shopforge.data.db.migrations.Shop as DbShop
 
-/**
- * Maps between SQLDelight-generated [DbShop] and domain [Shop].
- */
-object ShopMapper {
+internal fun DbShop.toDomain(): Shop = Shop(
+    id = id,
+    name = name,
+    type = ShopType.valueOf(type),
+    description = description,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+)
 
-    fun toDomain(dbShop: DbShop): Shop = Shop(
-        id = dbShop.id,
-        name = dbShop.name,
-        type = ShopType.valueOf(dbShop.type),
-        description = dbShop.description,
-        createdAt = dbShop.createdAt,
-        updatedAt = dbShop.updatedAt,
-    )
-
-    fun toDbType(shopType: ShopType): String = shopType.name
-}
+internal fun ShopType.toDbString(): String = name

@@ -37,3 +37,14 @@ ORDER BY name ASC;
 insert:
 INSERT INTO Item(name, description, type, price, rarity, isCustom)
 VALUES (?, ?, ?, ?, ?, ?);
+
+-- Update an existing item's mutable fields.
+update:
+UPDATE Item
+SET name = ?, description = ?, type = ?, price = ?, rarity = ?
+WHERE id = ?;
+
+-- Delete an item by id.
+delete:
+DELETE FROM Item
+WHERE id = ?;

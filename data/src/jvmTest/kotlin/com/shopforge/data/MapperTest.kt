@@ -1,9 +1,9 @@
 package com.shopforge.data
 
 import com.shopforge.data.db.SelectByShopId
-import com.shopforge.data.mapper.ItemMapper
-import com.shopforge.data.mapper.ShopInventoryMapper
-import com.shopforge.data.mapper.ShopMapper
+import com.shopforge.data.mapper.toDomain
+import com.shopforge.data.mapper.toDbString
+import com.shopforge.data.mapper.toDbIsCustom
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
@@ -35,7 +35,7 @@ class MapperTest {
             updatedAt = 2000L,
         )
 
-        val shop = ShopMapper.toDomain(dbShop)
+        val shop = dbShop.toDomain()
 
         assertEquals(1L, shop.id)
         assertEquals("The Gilded Anvil", shop.name)
@@ -56,14 +56,14 @@ class MapperTest {
             updatedAt = 1000L,
         )
 
-        val shop = ShopMapper.toDomain(dbShop)
+        val shop = dbShop.toDomain()
         assertNull(shop.description)
     }
 
     @Test
-    fun `ShopMapper toDbType converts all ShopType values`() {
+    fun `ShopType toDbString converts all ShopType values`() {
         ShopType.entries.forEach { shopType ->
-            assertEquals(shopType.name, ShopMapper.toDbType(shopType))
+            assertEquals(shopType.name, shopType.toDbString())
         }
     }
 
@@ -81,7 +81,7 @@ class MapperTest {
             isCustom = 0L,
         )
 
-        val item = ItemMapper.toDomain(dbItem)
+        val item = dbItem.toDomain()
 
         assertEquals(42L, item.id)
         assertEquals("Longsword", item.name)
@@ -104,29 +104,29 @@ class MapperTest {
             isCustom = 1L,
         )
 
-        val item = ItemMapper.toDomain(dbItem)
+        val item = dbItem.toDomain()
         assertTrue(item.isCustom)
         assertNull(item.description)
     }
 
     @Test
-    fun `ItemMapper toDbCategory converts all ItemCategory values`() {
+    fun `ItemCategory toDbString converts all ItemCategory values`() {
         ItemCategory.entries.forEach { category ->
-            assertEquals(category.name, ItemMapper.toDbCategory(category))
+            assertEquals(category.name, category.toDbString())
         }
     }
 
     @Test
-    fun `ItemMapper toDbRarity converts all Rarity values`() {
+    fun `Rarity toDbString converts all Rarity values`() {
         Rarity.entries.forEach { rarity ->
-            assertEquals(rarity.name, ItemMapper.toDbRarity(rarity))
+            assertEquals(rarity.name, rarity.toDbString())
         }
     }
 
     @Test
-    fun `ItemMapper toDbIsCustom converts boolean correctly`() {
-        assertEquals(1L, ItemMapper.toDbIsCustom(true))
-        assertEquals(0L, ItemMapper.toDbIsCustom(false))
+    fun `Boolean toDbIsCustom converts boolean correctly`() {
+        assertEquals(1L, true.toDbIsCustom())
+        assertEquals(0L, false.toDbIsCustom())
     }
 
     // ---- ShopInventoryMapper ----
@@ -147,7 +147,7 @@ class MapperTest {
             isCustom = 0L,
         )
 
-        val inventoryItem = ShopInventoryMapper.toDomain(row)
+        val inventoryItem = row.toDomain()
 
         assertEquals(42L, inventoryItem.item.id)
         assertEquals("Longsword", inventoryItem.item.name)
@@ -175,7 +175,7 @@ class MapperTest {
             isCustom = 0L,
         )
 
-        val inventoryItem = ShopInventoryMapper.toDomain(row)
+        val inventoryItem = row.toDomain()
         assertNull(inventoryItem.quantity)
         assertTrue(inventoryItem.isUnlimitedStock)
         assertFalse(inventoryItem.isSoldOut)
@@ -197,7 +197,7 @@ class MapperTest {
             isCustom = 0L,
         )
 
-        val inventoryItem = ShopInventoryMapper.toDomain(row)
+        val inventoryItem = row.toDomain()
         assertEquals(0, inventoryItem.quantity)
         assertTrue(inventoryItem.isSoldOut)
         assertFalse(inventoryItem.isUnlimitedStock)

@@ -165,6 +165,42 @@ class SchemaTest {
     }
 
     @Test
+    fun `update item`() {
+        val db = createTestDatabase()
+        db.itemQueries.insert("Longsword", "A standard longsword", "Weapon", 1500L, "Common", 0L)
+        val id = db.itemQueries.selectAll().executeAsList().first().id
+
+        db.itemQueries.update(
+            name = "Greatsword",
+            description = "An upgraded blade",
+            type = "Weapon",
+            price = 5000L,
+            rarity = "Rare",
+            id = id,
+        )
+
+        val updated = db.itemQueries.selectById(id).executeAsOne()
+        assertEquals("Greatsword", updated.name)
+        assertEquals("An upgraded blade", updated.description)
+        assertEquals(5000L, updated.price)
+        assertEquals("Rare", updated.rarity)
+        assertEquals(0L, updated.isCustom) // isCustom should not change
+    }
+
+    @Test
+    fun `delete item`() {
+        val db = createTestDatabase()
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
+        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Common", 0L)
+
+        val items = db.itemQueries.selectAll().executeAsList()
+        assertEquals(2, items.size)
+
+        db.itemQueries.delete(items.first().id)
+        assertEquals(1, db.itemQueries.selectAll().executeAsList().size)
+    }
+
+    @Test
     fun `select item by id returns null for nonexistent`() {
         val db = createTestDatabase()
         val item = db.itemQueries.selectById(999L).executeAsOneOrNull()
@@ -192,12 +228,12 @@ class SchemaTest {
         val inventory = db.shopInventoryQueries.selectByShopId(shopId).executeAsList()
         assertEquals(2, inventory.size)
 
-        val sword = inventory.first { it.name == "Dagger" }
-        assertNull(sword.quantity) // unlimited stock
+        val dagger = inventory.first { it.name == "Dagger" }
+        assertNull(dagger.quantity) // unlimited stock
 
-        val dagger = inventory.first { it.name == "Longsword" }
-        assertEquals(5L, dagger.quantity)
-        assertEquals(1600L, dagger.adjustedPrice)
+        val sword = inventory.first { it.name == "Longsword" }
+        assertEquals(5L, sword.quantity)
+        assertEquals(1600L, sword.adjustedPrice)
     }
 
     @Test

@@ -6,24 +6,18 @@ import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.data.db.migrations.Item as DbItem
 
-/**
- * Maps between SQLDelight-generated [DbItem] and domain [Item].
- */
-object ItemMapper {
+internal fun DbItem.toDomain(): Item = Item(
+    id = id,
+    name = name,
+    description = description,
+    category = ItemCategory.valueOf(type),
+    price = Price(price),
+    rarity = Rarity.valueOf(rarity),
+    isCustom = isCustom != 0L,
+)
 
-    fun toDomain(dbItem: DbItem): Item = Item(
-        id = dbItem.id,
-        name = dbItem.name,
-        description = dbItem.description,
-        category = ItemCategory.valueOf(dbItem.type),
-        price = Price(dbItem.price),
-        rarity = Rarity.valueOf(dbItem.rarity),
-        isCustom = dbItem.isCustom != 0L,
-    )
+internal fun ItemCategory.toDbString(): String = name
 
-    fun toDbCategory(category: ItemCategory): String = category.name
+internal fun Rarity.toDbString(): String = name
 
-    fun toDbRarity(rarity: Rarity): String = rarity.name
-
-    fun toDbIsCustom(isCustom: Boolean): Long = if (isCustom) 1L else 0L
-}
+internal fun Boolean.toDbIsCustom(): Long = if (this) 1L else 0L
