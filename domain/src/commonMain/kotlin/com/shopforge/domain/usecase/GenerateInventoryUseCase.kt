@@ -20,7 +20,7 @@ import kotlin.random.Random
  * - No duplicate items in a single inventory
  * - Quantity: random (1-10) or null (unlimited stock)
  */
-class GenerateInventoryUseCase(
+open class GenerateInventoryUseCase(
     private val itemRepository: ItemRepository,
 ) {
 
@@ -48,7 +48,7 @@ class GenerateInventoryUseCase(
      * @param random A [Random] instance for testability (use a seeded Random for deterministic tests).
      * @return A list of [ShopInventoryItem] representing the shop's generated inventory.
      */
-    suspend operator fun invoke(shopType: ShopType, random: Random = Random): List<ShopInventoryItem> {
+    open suspend operator fun invoke(shopType: ShopType, random: Random = Random): List<ShopInventoryItem> {
         // 1. Determine inventory size
         val inventorySize = random.nextInt(MIN_INVENTORY_SIZE, MAX_INVENTORY_SIZE + 1)
 

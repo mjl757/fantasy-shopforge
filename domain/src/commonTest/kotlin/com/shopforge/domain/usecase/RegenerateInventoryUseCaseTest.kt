@@ -1,8 +1,11 @@
 package com.shopforge.domain.usecase
 
-import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
+import com.shopforge.domain.repository.ItemRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,6 +16,24 @@ class RegenerateInventoryUseCaseTest {
     private val repository = FakeShopRepository()
     private val createUseCase = CreateShopUseCase(repository, clock = { TestFixtures.FIXED_TIME })
     private val addItemUseCase = AddItemToShopUseCase(repository)
+
+    private val emptyItemRepository = object : ItemRepository {
+        override fun getAllItems() = flowOf(emptyList<com.shopforge.domain.model.Item>())
+        override suspend fun getItemsByCategory(category: com.shopforge.domain.model.ItemCategory) = emptyList<com.shopforge.domain.model.Item>()
+        override suspend fun getItemsByRarity(rarity: com.shopforge.domain.model.Rarity) = emptyList<com.shopforge.domain.model.Item>()
+        override suspend fun searchItems(query: String) = emptyList<com.shopforge.domain.model.Item>()
+        override suspend fun getItemById(id: Long) = null
+        override suspend fun createCustomItem(item: com.shopforge.domain.model.Item) = 0L
+        override suspend fun updateCustomItem(item: com.shopforge.domain.model.Item) {}
+        override suspend fun deleteCustomItem(id: Long) {}
+    }
+
+    private fun fakeGenerator(
+        onInvoke: suspend (ShopType) -> List<ShopInventoryItem>,
+    ): GenerateInventoryUseCase = object : GenerateInventoryUseCase(emptyItemRepository) {
+        override suspend fun invoke(shopType: ShopType, random: Random): List<ShopInventoryItem> =
+            onInvoke(shopType)
+    }
 
     @Test
     fun `replaces existing inventory with generated items`() = runTest {
@@ -31,14 +52,12 @@ class RegenerateInventoryUseCaseTest {
             ),
         )
 
-        val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> {
-                assertEquals(ShopType.Blacksmith, shopType)
-                return generatedItems
-            }
+        val generator = fakeGenerator { shopType ->
+            assertEquals(ShopType.Blacksmith, shopType)
+            generatedItems
         }
 
-        val useCase = RegenerateInventoryUseCase(repository, fakeGenerator)
+        val useCase = RegenerateInventoryUseCase(repository, generator)
         useCase(shopId)
 
         val inventory = repository.getInventorySnapshot(shopId)
@@ -52,14 +71,12 @@ class RegenerateInventoryUseCaseTest {
         val shopId = createUseCase("Magic Place", ShopType.MagicShop)
         var capturedType: ShopType? = null
 
-        val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> {
-                capturedType = shopType
-                return emptyList()
-            }
+        val generator = fakeGenerator { shopType ->
+            capturedType = shopType
+            emptyList()
         }
 
-        val useCase = RegenerateInventoryUseCase(repository, fakeGenerator)
+        val useCase = RegenerateInventoryUseCase(repository, generator)
         useCase(shopId)
 
         assertEquals(ShopType.MagicShop, capturedType)
@@ -67,12 +84,9 @@ class RegenerateInventoryUseCaseTest {
 
     @Test
     fun `throws for nonexistent shop`() = runTest {
-        val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> =
-                emptyList()
-        }
+        val generator = fakeGenerator { emptyList() }
 
-        val useCase = RegenerateInventoryUseCase(repository, fakeGenerator)
+        val useCase = RegenerateInventoryUseCase(repository, generator)
 
         assertFailsWith<NoSuchElementException> {
             useCase(999L)
@@ -85,12 +99,9 @@ class RegenerateInventoryUseCaseTest {
         val item = TestFixtures.sampleItem(id = 1L)
         addItemUseCase(shopId, item, 5, item.price)
 
-        val fakeGenerator = object : GenerateInventoryUseCase {
-            override suspend fun invoke(shopType: ShopType): List<ShopInventoryItem> =
-                emptyList()
-        }
+        val generator = fakeGenerator { emptyList() }
 
-        val useCase = RegenerateInventoryUseCase(repository, fakeGenerator)
+        val useCase = RegenerateInventoryUseCase(repository, generator)
         useCase(shopId)
 
         val inventory = repository.getInventorySnapshot(shopId)
