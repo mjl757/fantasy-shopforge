@@ -1,7 +1,6 @@
 package com.shopforge.domain.usecase
 
-import com.shopforge.domain.model.Shop
-import com.shopforge.domain.model.ShopInventoryItem
+import com.shopforge.domain.model.ShopWithInventory
 import com.shopforge.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,11 +21,3 @@ class GetShopWithInventoryUseCase(
         }
     }
 }
-
-/**
- * A shop paired with its current inventory.
- */
-data class ShopWithInventory(
-    val shop: Shop,
-    val inventory: List<ShopInventoryItem>,
-)
