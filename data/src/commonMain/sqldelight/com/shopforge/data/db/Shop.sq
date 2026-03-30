@@ -1,0 +1,29 @@
+-- Queries for the Shop table.
+
+-- Select all shops, ordered by most recently updated.
+selectAll:
+SELECT *
+FROM Shop
+ORDER BY updatedAt DESC;
+
+-- Select a single shop by id.
+selectById:
+SELECT *
+FROM Shop
+WHERE id = ?;
+
+-- Insert a new shop. Returns the generated id via lastInsertRowId().
+insert:
+INSERT INTO Shop(name, type, description, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, ?);
+
+-- Update an existing shop's mutable fields.
+update:
+UPDATE Shop
+SET name = ?, type = ?, description = ?, updatedAt = ?
+WHERE id = ?;
+
+-- Delete a shop by id. Foreign key cascade will remove related inventory.
+delete:
+DELETE FROM Shop
+WHERE id = ?;
