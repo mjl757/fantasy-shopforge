@@ -1,6 +1,7 @@
 package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.ShopType
+import com.shopforge.domain.model.ShopWithInventory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

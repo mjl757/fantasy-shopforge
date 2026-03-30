@@ -23,6 +23,7 @@ class AddItemToShopUseCase(
         quantity: Int?,
         adjustedPrice: Price,
     ) {
+        require(quantity == null || quantity >= 0) { "Quantity cannot be negative. Got: $quantity" }
         shopRepository.addItemToShop(
             shopId = shopId,
             item = item,
