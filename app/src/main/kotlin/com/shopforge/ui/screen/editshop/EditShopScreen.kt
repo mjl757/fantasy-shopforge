@@ -43,6 +43,7 @@ import com.shopforge.ui.screen.createshop.ShopTypeDropdown
 fun EditShopScreen(
     viewModel: EditShopViewModel,
     onNavigateBack: () -> Unit,
+    onShopDeleted: () -> Unit = onNavigateBack,
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -51,7 +52,7 @@ fun EditShopScreen(
             when (event) {
                 EditShopEvent.ShopUpdated -> onNavigateBack()
                 EditShopEvent.InventoryRegenerated -> { /* stay on screen */ }
-                EditShopEvent.ShopDeleted -> onNavigateBack()
+                EditShopEvent.ShopDeleted -> onShopDeleted()
             }
         }
     }
