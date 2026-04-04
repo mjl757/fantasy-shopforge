@@ -26,13 +26,19 @@ class ShopDetailViewModel(
 
     private val _searchQuery = MutableStateFlow("")
 
+    // Tracks the full unfiltered inventory so decrementQuantity works correctly
+    // even when a search filter is active and hides the target item.
+    private val _allInventory = MutableStateFlow<List<ShopInventoryItem>>(emptyList())
+
     val uiState: StateFlow<ShopDetailUiState> = combine(
         getShopWithInventory(shopId),
         _searchQuery,
     ) { shopWithInventory, query ->
         if (shopWithInventory == null) {
+            _allInventory.value = emptyList()
             ShopDetailUiState.NotFound
         } else {
+            _allInventory.value = shopWithInventory.inventory
             val filteredInventory = if (query.isBlank()) {
                 shopWithInventory.inventory
             } else {
@@ -60,7 +66,9 @@ class ShopDetailViewModel(
         val state = uiState.value
         if (state !is ShopDetailUiState.Loaded) return
 
-        val inventoryItem = state.inventory.find { it.item.id == itemId } ?: return
+        // Use the full unfiltered inventory so decrement works when a search
+        // filter is active and the item is temporarily hidden from the list.
+        val inventoryItem = _allInventory.value.find { it.item.id == itemId } ?: return
 
         // No-op for unlimited stock or sold-out items
         if (inventoryItem.isUnlimitedStock || inventoryItem.isSoldOut) return

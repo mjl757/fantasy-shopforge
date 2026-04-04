@@ -1,7 +1,6 @@
 package com.shopforge.di
 
 import com.shopforge.ui.shopdetail.ShopDetailViewModel
-import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
