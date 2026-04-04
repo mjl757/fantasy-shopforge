@@ -16,7 +16,7 @@ serialization = "1.8.1"
 sqldelight = "2.3.2"
 
 # DI
-metro = "0.11.4"
+koin = "4.0.2"
 
 # Testing
 junit = "6.0.3"
@@ -51,10 +51,9 @@ sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", ver
 sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 
-# Metro DI
-metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
-metro-runtime-jvm = { module = "dev.zacsweers.metro:runtime-jvm", version.ref = "metro" }
-metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-compose", version.ref = "metro" }
+# Koin DI
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 
 # Testing
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
@@ -71,5 +70,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
-metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
-    alias(libs.plugins.metro)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -70,9 +69,12 @@ dependencies {
     // Serialization (required for type-safe Navigation Compose routes)
     implementation(libs.kotlinx.serialization.json)
 
-    // Metro DI
-    implementation(libs.metro.runtime)
-    implementation(libs.metrox.viewmodel.compose)
+    // Koin DI
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
+    // SQLDelight Android driver (needed to create AndroidSqliteDriver in DI)
+    implementation(libs.sqldelight.android.driver)
 
     // Testing
     testImplementation(libs.junit.jupiter)

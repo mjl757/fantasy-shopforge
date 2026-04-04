@@ -1,26 +1,19 @@
 package com.shopforge
 
 import android.app.Application
-import com.shopforge.di.AppGraph
-import dev.zacsweers.metro.createGraphFactory
+import com.shopforge.di.appModule
+import com.shopforge.di.dataModule
+import com.shopforge.di.domainModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
 class ShopForgeApplication : Application() {
 
-    /**
-     * Root DI graph. Lazily initialized on first access so that the graph is
-     * only created once the application is fully initialized.
-     *
-     * Downstream components (Activities, Composables) can access this via
-     * `(application as ShopForgeApplication).appGraph`.
-     */
-    val appGraph: AppGraph by lazy {
-        createGraphFactory<AppGraph.Factory>().create(this)
-    }
-
     override fun onCreate() {
         super.onCreate()
-        // Eagerly initialize the graph so Metro's compile-time validation is
-        // exercised on startup rather than on first use.
-        appGraph
+        startKoin {
+            androidContext(this@ShopForgeApplication)
+            modules(appModule, dataModule, domainModule)
+        }
     }
 }
