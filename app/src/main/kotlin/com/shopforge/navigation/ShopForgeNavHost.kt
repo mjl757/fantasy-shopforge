@@ -1,6 +1,7 @@
 package com.shopforge.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,9 +18,11 @@ import com.shopforge.ui.screen.createshop.CreateShopScreen
 import com.shopforge.ui.screen.createshop.CreateShopViewModel
 import com.shopforge.ui.screen.editshop.EditShopScreen
 import com.shopforge.ui.screen.editshop.EditShopViewModel
-import com.shopforge.ui.screens.ShopListScreen
 import com.shopforge.ui.shopdetail.ShopDetailScreen
 import com.shopforge.ui.shopdetail.ShopDetailViewModel
+import com.shopforge.ui.shoplist.ShopListEvent
+import com.shopforge.ui.shoplist.ShopListScreen
+import com.shopforge.ui.shoplist.ShopListViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -41,12 +44,27 @@ fun ShopForgeNavHost(
         modifier = modifier,
     ) {
         composable<AppRoute.ShopList> {
+            val viewModel: ShopListViewModel = koinViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(viewModel) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is ShopListEvent.NavigateToShopDetail ->
+                            navController.navigate(AppRoute.ShopDetail(event.shopId.toString()))
+                        ShopListEvent.NavigateToCreateShop ->
+                            navController.navigate(AppRoute.CreateShop)
+                        ShopListEvent.NavigateToGenerateShop ->
+                            navController.navigate(AppRoute.GenerateShop)
+                    }
+                }
+            }
             ShopListScreen(
-                onShopClick = { shopId ->
-                    navController.navigate(AppRoute.ShopDetail(shopId))
-                },
-                onCreateShop = { navController.navigate(AppRoute.CreateShop) },
-                onGenerateShop = { navController.navigate(AppRoute.GenerateShop) },
+                uiState = uiState,
+                onShopClick = viewModel::onShopClicked,
+                onCreateShopClick = viewModel::onCreateShopClicked,
+                onGenerateShopClick = viewModel::onGenerateShopClicked,
+                onFilterSelected = viewModel::onFilterSelected,
+                onSortOrderChanged = viewModel::onSortOrderChanged,
             )
         }
 
