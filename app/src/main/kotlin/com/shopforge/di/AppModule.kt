@@ -1,12 +1,10 @@
 package com.shopforge.di
 
+import com.shopforge.ui.shopdetail.ShopDetailViewModel
+import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-/**
- * Koin module for the :app layer (ViewModels).
- *
- * Add viewModel { } bindings here as screens are implemented.
- * Database, repositories: dataModule. Use cases: domainModule.
- */
 val appModule = module {
+    viewModel { (shopId: Long) -> ShopDetailViewModel(shopId, get(), get()) }
 }
