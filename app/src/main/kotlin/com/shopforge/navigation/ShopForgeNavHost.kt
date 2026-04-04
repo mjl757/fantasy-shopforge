@@ -10,7 +10,8 @@ import androidx.navigation.toRoute
 import com.shopforge.ui.screens.AddItemToShopScreen
 import com.shopforge.ui.screens.CreateShopScreen
 import com.shopforge.ui.screens.EditShopScreen
-import com.shopforge.ui.screens.GenerateShopScreen
+import com.shopforge.ui.generate.GenerateShopScreen
+import com.shopforge.ui.generate.GenerateShopViewModel
 import com.shopforge.ui.screens.ShopListScreen
 import com.shopforge.ui.shopdetail.ShopDetailViewModel
 import com.shopforge.ui.shopdetail.ShopDetailScreen
@@ -82,14 +83,15 @@ fun ShopForgeNavHost(
         }
 
         composable<AppRoute.GenerateShop> {
+            val viewModel: GenerateShopViewModel = koinViewModel()
             GenerateShopScreen(
+                viewModel = viewModel,
                 onShopGenerated = { shopId ->
-                    navController.navigate(AppRoute.ShopDetail(shopId)) {
+                    navController.navigate(AppRoute.ShopDetail(shopId.toString())) {
                         popUpTo(AppRoute.ShopList) { inclusive = false }
                         launchSingleTop = true
                     }
                 },
-                onBack = { navController.popBackStack() },
             )
         }
 
