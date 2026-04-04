@@ -159,7 +159,7 @@ class SchemaTest {
         db.itemQueries.insert("Shortsword", null, "Weapon", 1000L, "Common", 0L)
         db.itemQueries.insert("Chain Mail", null, "Armor", 7500L, "Common", 0L)
 
-        val results = db.itemQueries.searchByName("sword").executeAsList()
+        val results = db.itemQueries.searchByName("sword", "sword").executeAsList()
         assertEquals(2, results.size)
         assertTrue(results.all { it.name.contains("sword", ignoreCase = true) })
     }
@@ -167,7 +167,7 @@ class SchemaTest {
     @Test
     fun `update item`() {
         val db = createTestDatabase()
-        db.itemQueries.insert("Longsword", "A standard longsword", "Weapon", 1500L, "Common", 0L)
+        db.itemQueries.insert("Longsword", "A standard longsword", "Weapon", 1500L, "Common", 1L)
         val id = db.itemQueries.selectAll().executeAsList().first().id
 
         db.itemQueries.update(
@@ -184,7 +184,7 @@ class SchemaTest {
         assertEquals("An upgraded blade", updated.description)
         assertEquals(5000L, updated.price)
         assertEquals("Rare", updated.rarity)
-        assertEquals(0L, updated.isCustom) // isCustom should not change
+        assertEquals(1L, updated.isCustom) // isCustom should not change
     }
 
     @Test
