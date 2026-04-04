@@ -4,8 +4,8 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.shopforge.data.db.ShopForgeDatabase
-import com.shopforge.data.mapper.ShopInventoryMapper
-import com.shopforge.data.mapper.ShopMapper
+import com.shopforge.data.mapper.toDbString
+import com.shopforge.data.mapper.toDomain
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Shop
@@ -36,30 +36,29 @@ class ShopRepositoryImpl(
         shopQueries.selectAll()
             .asFlow()
             .mapToList(context)
-            .map { list -> list.map(ShopMapper::toDomain) }
+            .map { list -> list.map { it.toDomain() } }
 
     override fun getShopById(id: Long): Flow<Shop?> =
         shopQueries.selectById(id)
             .asFlow()
             .mapToOneOrNull(context)
-            .map { dbShop -> dbShop?.let(ShopMapper::toDomain) }
+            .map { dbShop -> dbShop?.toDomain() }
 
     override suspend fun createShop(shop: Shop): Long {
         shopQueries.insert(
             name = shop.name,
-            type = ShopMapper.toDbType(shop.type),
+            type = shop.type.toDbString(),
             description = shop.description,
             createdAt = shop.createdAt,
             updatedAt = shop.updatedAt,
         )
-        // SQLDelight's last_insert_rowid() gives us the generated id.
-        return shopQueries.selectAll().executeAsList().first { it.name == shop.name }.id
+        return shopQueries.lastInsertRowId().executeAsOne()
     }
 
     override suspend fun updateShop(shop: Shop) {
         shopQueries.update(
             name = shop.name,
-            type = ShopMapper.toDbType(shop.type),
+            type = shop.type.toDbString(),
             description = shop.description,
             updatedAt = shop.updatedAt,
             id = shop.id,
@@ -80,7 +79,7 @@ class ShopRepositoryImpl(
         inventoryQueries.selectByShopId(shopId)
             .asFlow()
             .mapToList(context)
-            .map { list -> list.map(ShopInventoryMapper::toDomain) }
+            .map { list -> list.map { it.toDomain() } }
 
     override suspend fun addItemToShop(
         shopId: Long,

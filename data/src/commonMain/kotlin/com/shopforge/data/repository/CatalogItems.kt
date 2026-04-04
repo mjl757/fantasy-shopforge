@@ -20,6 +20,7 @@ internal object CatalogItems {
         Item(id = 0, name = "Dagger", description = "A simple but reliable stabbing weapon", category = ItemCategory.Weapon, price = Price.ofGold(2), rarity = Rarity.Common, isCustom = false),
         Item(id = 0, name = "Battleaxe", description = "A heavy axe built for war", category = ItemCategory.Weapon, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
         Item(id = 0, name = "Warhammer", description = "A crushing weapon of forged iron", category = ItemCategory.Weapon, price = Price.ofGold(15), rarity = Rarity.Common, isCustom = false),
+        Item(id = 0, name = "Longbow", description = "A tall bow of yew for ranged combat", category = ItemCategory.Weapon, price = Price.ofGold(50), rarity = Rarity.Common, isCustom = false),
 
         // ---- Armor ----
         Item(id = 0, name = "Chain Mail", description = "Interlocking metal rings offering solid protection", category = ItemCategory.Armor, price = Price.ofGold(75), rarity = Rarity.Common, isCustom = false),
@@ -65,7 +66,6 @@ internal object CatalogItems {
         // ---- Ammunition ----
         Item(id = 0, name = "Arrows (20)", description = "A bundle of wooden-shafted arrows", category = ItemCategory.Ammunition, price = Price.ofGold(1), rarity = Rarity.Common, isCustom = false),
         Item(id = 0, name = "Crossbow Bolts (20)", description = "Short iron-tipped bolts for crossbows", category = ItemCategory.Ammunition, price = Price.ofGold(1), rarity = Rarity.Common, isCustom = false),
-        Item(id = 0, name = "Longbow", description = "A tall bow of yew for ranged combat", category = ItemCategory.Weapon, price = Price.ofGold(50), rarity = Rarity.Common, isCustom = false),
 
         // ---- Alchemical Supplies ----
         Item(id = 0, name = "Alchemist's Fire", description = "A volatile flask that bursts into flame on impact", category = ItemCategory.AlchemicalSupply, price = Price.ofGold(50), rarity = Rarity.Common, isCustom = false),

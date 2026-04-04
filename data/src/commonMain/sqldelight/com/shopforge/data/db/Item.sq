@@ -26,11 +26,11 @@ FROM Item
 WHERE rarity = ?
 ORDER BY name ASC;
 
--- Search items by name (case-insensitive).
+-- Search items by name or description (case-insensitive).
 searchByName:
 SELECT *
 FROM Item
-WHERE name LIKE '%' || ? || '%'
+WHERE name LIKE '%' || ? || '%' OR description LIKE '%' || ? || '%'
 ORDER BY name ASC;
 
 -- Count catalog (non-custom) items.
@@ -61,3 +61,7 @@ WHERE id = ? AND isCustom = 1;
 -- Count all items (used for catalog seeding check).
 countAll:
 SELECT COUNT(*) FROM Item;
+
+-- Return the row id of the last inserted row.
+lastInsertRowId:
+SELECT last_insert_rowid();

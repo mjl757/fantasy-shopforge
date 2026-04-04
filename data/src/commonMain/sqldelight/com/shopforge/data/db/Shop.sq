@@ -27,3 +27,7 @@ WHERE id = ?;
 delete:
 DELETE FROM Shop
 WHERE id = ?;
+
+-- Return the row id of the last inserted row.
+lastInsertRowId:
+SELECT last_insert_rowid();

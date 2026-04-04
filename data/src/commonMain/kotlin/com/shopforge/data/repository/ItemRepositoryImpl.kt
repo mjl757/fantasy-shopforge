@@ -3,7 +3,9 @@ package com.shopforge.data.repository
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.shopforge.data.db.ShopForgeDatabase
-import com.shopforge.data.mapper.ItemMapper
+import com.shopforge.data.mapper.toDbIsCustom
+import com.shopforge.data.mapper.toDbString
+import com.shopforge.data.mapper.toDomain
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Rarity
@@ -32,27 +34,27 @@ class ItemRepositoryImpl(
         itemQueries.selectAll()
             .asFlow()
             .mapToList(context)
-            .map { list -> list.map(ItemMapper::toDomain) }
+            .map { list -> list.map { it.toDomain() } }
 
     override suspend fun getItemsByCategory(category: ItemCategory): List<Item> =
-        itemQueries.selectByCategory(ItemMapper.toDbCategory(category))
+        itemQueries.selectByCategory(category.toDbString())
             .executeAsList()
-            .map(ItemMapper::toDomain)
+            .map { it.toDomain() }
 
     override suspend fun getItemsByRarity(rarity: Rarity): List<Item> =
-        itemQueries.selectByRarity(ItemMapper.toDbRarity(rarity))
+        itemQueries.selectByRarity(rarity.toDbString())
             .executeAsList()
-            .map(ItemMapper::toDomain)
+            .map { it.toDomain() }
 
     override suspend fun searchItems(query: String): List<Item> =
-        itemQueries.searchByName(query)
+        itemQueries.searchByName(query, query)
             .executeAsList()
-            .map(ItemMapper::toDomain)
+            .map { it.toDomain() }
 
     override suspend fun getItemById(id: Long): Item? =
         itemQueries.selectById(id)
             .executeAsOneOrNull()
-            ?.let(ItemMapper::toDomain)
+            ?.toDomain()
 
     // ---- Custom item CRUD ----
 
@@ -61,13 +63,12 @@ class ItemRepositoryImpl(
         itemQueries.insert(
             name = item.name,
             description = item.description,
-            type = ItemMapper.toDbCategory(item.category),
+            type = item.category.toDbString(),
             price = item.price.copperPieces,
-            rarity = ItemMapper.toDbRarity(item.rarity),
-            isCustom = ItemMapper.toDbIsCustom(true),
+            rarity = item.rarity.toDbString(),
+            isCustom = true.toDbIsCustom(),
         )
-        // Return the id of the last inserted row.
-        return itemQueries.selectAll().executeAsList().last { it.name == item.name }.id
+        return itemQueries.lastInsertRowId().executeAsOne()
     }
 
     override suspend fun updateCustomItem(item: Item) {
@@ -75,9 +76,9 @@ class ItemRepositoryImpl(
         itemQueries.update(
             name = item.name,
             description = item.description,
-            type = ItemMapper.toDbCategory(item.category),
+            type = item.category.toDbString(),
             price = item.price.copperPieces,
-            rarity = ItemMapper.toDbRarity(item.rarity),
+            rarity = item.rarity.toDbString(),
             id = item.id,
         )
     }
@@ -93,18 +94,18 @@ class ItemRepositoryImpl(
      * This operation is idempotent — if items already exist, nothing happens.
      */
     fun seedCatalogIfEmpty() {
-        val count = itemQueries.countAll().executeAsOne()
-        if (count > 0L) return
-
         database.transaction {
+            val count = itemQueries.countAll().executeAsOne()
+            if (count > 0L) return@transaction
+
             CatalogItems.all.forEach { item ->
                 itemQueries.insert(
                     name = item.name,
                     description = item.description,
-                    type = ItemMapper.toDbCategory(item.category),
+                    type = item.category.toDbString(),
                     price = item.price.copperPieces,
-                    rarity = ItemMapper.toDbRarity(item.rarity),
-                    isCustom = ItemMapper.toDbIsCustom(false),
+                    rarity = item.rarity.toDbString(),
+                    isCustom = false.toDbIsCustom(),
                 )
             }
         }
