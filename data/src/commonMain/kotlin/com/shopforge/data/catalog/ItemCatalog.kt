@@ -5,7 +5,7 @@ import com.shopforge.domain.model.Rarity
 
 /**
  * The built-in item catalog for Fantasy ShopForge.
- * Contains ~35 original generic fantasy items across all categories.
+ * Contains 40 original generic fantasy items across all categories.
  *
  * All prices are stored in copper pieces (CP).
  * Conversion: 1 GP = 100 CP, 1 SP = 10 CP, 1 PP = 1000 CP.

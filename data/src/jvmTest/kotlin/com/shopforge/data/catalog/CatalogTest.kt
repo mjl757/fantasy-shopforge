@@ -2,7 +2,7 @@ package com.shopforge.data.catalog
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.shopforge.data.db.ShopForgeDatabase
-import com.shopforge.data.mapper.ItemMapper
+import com.shopforge.data.mapper.toDomain
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Rarity
 import kotlin.test.Test
@@ -190,7 +190,7 @@ class CatalogTest {
         CatalogSeeder.seed(db)
 
         val allDbItems = db.itemQueries.selectAll().executeAsList()
-        val domainItems = allDbItems.map { ItemMapper.toDomain(it) }
+        val domainItems = allDbItems.map { it.toDomain() }
 
         assertEquals(ItemCatalog.size, domainItems.size)
         domainItems.forEach { item ->
