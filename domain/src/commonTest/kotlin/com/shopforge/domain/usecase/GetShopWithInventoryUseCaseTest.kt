@@ -1,48 +1,98 @@
 package com.shopforge.domain.usecase
 
+import com.shopforge.domain.model.Item
+import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Price
+import com.shopforge.domain.model.Rarity
+import com.shopforge.domain.model.Shop
+import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
-import com.shopforge.domain.model.ShopWithInventory
+import com.shopforge.domain.repository.ShopRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
 
 class GetShopWithInventoryUseCaseTest {
 
-    private val repository = FakeShopRepository()
-    private val createUseCase = CreateShopUseCase(repository, clock = { TestFixtures.FIXED_TIME })
-    private val addItemUseCase = AddItemToShopUseCase(repository)
+    private val shopFlow = MutableStateFlow<Shop?>(null)
+    private val inventoryFlow = MutableStateFlow<List<ShopInventoryItem>>(emptyList())
+
+    private val repository = object : ShopRepository {
+        override fun getAllShops(): Flow<List<Shop>> = throw NotImplementedError()
+        override fun getShopById(id: Long): Flow<Shop?> = shopFlow
+        override fun getInventory(shopId: Long): Flow<List<ShopInventoryItem>> = inventoryFlow
+        override suspend fun createShop(shop: Shop): Long = throw NotImplementedError()
+        override suspend fun updateShop(shop: Shop) = throw NotImplementedError()
+        override suspend fun deleteShop(id: Long) = throw NotImplementedError()
+        override suspend fun addItemToShop(shopId: Long, item: Item, quantity: Int?, adjustedPrice: Price) =
+            throw NotImplementedError()
+        override suspend fun removeItemFromShop(shopId: Long, itemId: Long) = throw NotImplementedError()
+        override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) =
+            throw NotImplementedError()
+        override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) =
+            throw NotImplementedError()
+    }
+
     private val useCase = GetShopWithInventoryUseCase(repository)
 
+    private val testShop = Shop(
+        id = 1L,
+        name = "Test Shop",
+        type = ShopType.Blacksmith,
+        description = null,
+        createdAt = 1000L,
+        updatedAt = 1000L,
+    )
+
+    private val testItem = ShopInventoryItem(
+        item = Item(
+            id = 10L,
+            name = "Longsword",
+            category = ItemCategory.Weapon,
+            price = Price.ofGold(15),
+            rarity = Rarity.Common,
+            isCustom = false,
+        ),
+        quantity = 5,
+        adjustedPrice = Price.ofGold(16),
+    )
+
     @Test
-    fun `returns null for nonexistent shop`() = runTest {
-        val result = useCase(999L).first()
+    fun combinesShopAndInventory() = runTest {
+        shopFlow.value = testShop
+        inventoryFlow.value = listOf(testItem)
+
+        val result = useCase(1L).first()
+
+        assertNotNull(result)
+        assertEquals(testShop, result.shop)
+        assertEquals(1, result.inventory.size)
+        assertEquals("Longsword", result.inventory[0].item.name)
+    }
+
+    @Test
+    fun emitsNullWhenShopDoesNotExist() = runTest {
+        shopFlow.value = null
+        inventoryFlow.value = listOf(testItem)
+
+        val result = useCase(1L).first()
         assertNull(result)
     }
 
     @Test
-    fun `returns shop with empty inventory`() = runTest {
-        val id = createUseCase("Empty Shop", ShopType.GeneralStore)
+    fun emitsEmptyInventoryForNewShop() = runTest {
+        shopFlow.value = testShop
+        inventoryFlow.value = emptyList()
 
-        val result = useCase(id).first()
+        val result = useCase(1L).first()
+
         assertNotNull(result)
-        assertEquals("Empty Shop", result.shop.name)
-        assertTrue(result.inventory.isEmpty())
-    }
-
-    @Test
-    fun `returns shop with inventory items`() = runTest {
-        val id = createUseCase("Stocked Shop", ShopType.Blacksmith)
-        val item1 = TestFixtures.sampleItem(id = 1L, name = "Sword")
-        val item2 = TestFixtures.sampleItem(id = 2L, name = "Shield")
-        addItemUseCase(id, item1, 3, item1.price)
-        addItemUseCase(id, item2, null, item2.price)
-
-        val result = useCase(id).first()
-        assertNotNull(result)
-        assertEquals(2, result.inventory.size)
+        assertEquals(testShop, result.shop)
+        assertEquals(0, result.inventory.size)
     }
 }

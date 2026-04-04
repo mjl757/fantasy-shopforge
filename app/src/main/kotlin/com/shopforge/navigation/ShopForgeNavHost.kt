@@ -11,8 +11,11 @@ import com.shopforge.ui.screens.AddItemToShopScreen
 import com.shopforge.ui.screens.CreateShopScreen
 import com.shopforge.ui.screens.EditShopScreen
 import com.shopforge.ui.screens.GenerateShopScreen
-import com.shopforge.ui.screens.ShopDetailScreen
 import com.shopforge.ui.screens.ShopListScreen
+import com.shopforge.ui.shopdetail.ShopDetailViewModel
+import com.shopforge.ui.shopdetail.ShopDetailScreen
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Single [NavHost] for the entire app.
@@ -43,11 +46,14 @@ fun ShopForgeNavHost(
 
         composable<AppRoute.ShopDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.ShopDetail>()
+            val viewModel: ShopDetailViewModel = koinViewModel(
+                parameters = { parametersOf(route.shopId.toLong()) }
+            )
             ShopDetailScreen(
-                shopId = route.shopId,
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
                 onEditShop = { navController.navigate(AppRoute.EditShop(route.shopId)) },
                 onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId)) },
-                onBack = { navController.popBackStack() },
             )
         }
 
