@@ -62,18 +62,21 @@ class GenerateInventoryUseCaseTest {
         Item(19, "Bolts (20)", null, ItemCategory.Ammunition, Price.ofGold(1), Rarity.Common, false),
     )
 
-    private fun createUseCase(items: List<Item> = testCatalog): GenerateInventoryUseCase {
-        return GenerateInventoryUseCase(FakeItemRepository(items))
+    private fun createUseCase(
+        items: List<Item> = testCatalog,
+        random: Random = Random.Default,
+    ): GenerateInventoryUseCase {
+        return GenerateInventoryUseCase(FakeItemRepository(items), random)
     }
 
     // ---- Inventory size tests ----
 
     @Test
     fun `generated inventory size is between 8 and 15`() = runTest {
-        val useCase = createUseCase()
         // Run multiple times with different seeds
         repeat(50) { seed ->
-            val result = useCase.invoke(ShopType.Blacksmith, Random(seed))
+            val useCase = createUseCase(random = Random(seed))
+            val result = useCase.invoke(ShopType.Blacksmith)
             assertTrue(
                 result.size in 8..15,
                 "Inventory size ${result.size} not in expected range for seed $seed"
@@ -84,16 +87,16 @@ class GenerateInventoryUseCaseTest {
     @Test
     fun `inventory size is capped by available candidates`() = runTest {
         // Only 2 items available for General Store (AdventuringGear + Food)
-        val useCase = createUseCase()
-        val result = useCase.invoke(ShopType.GeneralStore, Random(42))
+        val useCase = createUseCase(random = Random(42))
+        val result = useCase.invoke(ShopType.GeneralStore)
         // GeneralStore categories: AdventuringGear, Food -> only 2 items in our catalog
         assertEquals(2, result.size)
     }
 
     @Test
     fun `empty catalog returns empty inventory`() = runTest {
-        val useCase = createUseCase(emptyList())
-        val result = useCase.invoke(ShopType.Blacksmith, Random(42))
+        val useCase = createUseCase(emptyList(), Random(42))
+        val result = useCase.invoke(ShopType.Blacksmith)
         assertTrue(result.isEmpty())
     }
 
@@ -101,8 +104,8 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `items are filtered by shop type default categories`() = runTest {
-        val useCase = createUseCase()
-        val result = useCase.invoke(ShopType.Blacksmith, Random(42))
+        val useCase = createUseCase(random = Random(42))
+        val result = useCase.invoke(ShopType.Blacksmith)
         val allowedCategories = ShopType.Blacksmith.defaultCategories.toSet()
         result.forEach { inventoryItem ->
             assertTrue(
@@ -115,8 +118,8 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `fletcher inventory only contains weapons and ammunition`() = runTest {
-        val useCase = createUseCase()
-        val result = useCase.invoke(ShopType.Fletcher, Random(42))
+        val useCase = createUseCase(random = Random(42))
+        val result = useCase.invoke(ShopType.Fletcher)
         val allowedCategories = ShopType.Fletcher.defaultCategories.toSet()
         result.forEach { inventoryItem ->
             assertTrue(inventoryItem.item.category in allowedCategories)
@@ -127,9 +130,9 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `no duplicate items in generated inventory`() = runTest {
-        val useCase = createUseCase()
         repeat(50) { seed ->
-            val result = useCase.invoke(ShopType.Blacksmith, Random(seed))
+            val useCase = createUseCase(random = Random(seed))
+            val result = useCase.invoke(ShopType.Blacksmith)
             val ids = result.map { it.item.id }
             assertEquals(ids.size, ids.toSet().size, "Duplicate items found for seed $seed")
         }
@@ -139,9 +142,9 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `price variance is within plus minus 10 percent`() = runTest {
-        val useCase = createUseCase()
         repeat(50) { seed ->
-            val result = useCase.invoke(ShopType.Blacksmith, Random(seed))
+            val useCase = createUseCase(random = Random(seed))
+            val result = useCase.invoke(ShopType.Blacksmith)
             result.forEach { inventoryItem ->
                 val baseCp = inventoryItem.item.price.copperPieces
                 val adjustedCp = inventoryItem.adjustedPrice.copperPieces
@@ -157,8 +160,8 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `price variance rounds to nearest copper piece`() = runTest {
-        val useCase = createUseCase()
-        val result = useCase.invoke(ShopType.Blacksmith, Random(42))
+        val useCase = createUseCase(random = Random(42))
+        val result = useCase.invoke(ShopType.Blacksmith)
         result.forEach { inventoryItem ->
             // Price is always stored as whole copper pieces
             assertTrue(inventoryItem.adjustedPrice.copperPieces >= 1)
@@ -169,11 +172,11 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `rarity distribution favors common items over large sample`() = runTest {
-        val useCase = createUseCase()
         val counts = mutableMapOf<Rarity, Int>()
 
         for (seed in 0 until 200) {
-            val result = useCase(ShopType.Blacksmith, Random(seed))
+            val useCase = createUseCase(random = Random(seed))
+            val result = useCase(ShopType.Blacksmith)
             result.forEach { item ->
                 counts[item.item.rarity] = (counts[item.item.rarity] ?: 0) + 1
             }
@@ -189,9 +192,8 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `same seed produces identical results`() = runTest {
-        val useCase = createUseCase()
-        val result1 = useCase.invoke(ShopType.Blacksmith, Random(12345))
-        val result2 = useCase.invoke(ShopType.Blacksmith, Random(12345))
+        val result1 = createUseCase(random = Random(12345)).invoke(ShopType.Blacksmith)
+        val result2 = createUseCase(random = Random(12345)).invoke(ShopType.Blacksmith)
 
         assertEquals(result1.size, result2.size)
         result1.zip(result2).forEach { (a, b) ->
@@ -203,9 +205,8 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `different seeds produce different results`() = runTest {
-        val useCase = createUseCase()
-        val result1 = useCase.invoke(ShopType.Blacksmith, Random(1))
-        val result2 = useCase.invoke(ShopType.Blacksmith, Random(99999))
+        val result1 = createUseCase(random = Random(1)).invoke(ShopType.Blacksmith)
+        val result2 = createUseCase(random = Random(99999)).invoke(ShopType.Blacksmith)
 
         // At least one item or price should differ (extremely unlikely to be identical)
         val itemIds1 = result1.map { it.item.id }
@@ -222,9 +223,9 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `generated quantities are valid`() = runTest {
-        val useCase = createUseCase()
         repeat(20) { seed ->
-            val result = useCase.invoke(ShopType.Blacksmith, Random(seed))
+            val useCase = createUseCase(random = Random(seed))
+            val result = useCase.invoke(ShopType.Blacksmith)
             result.forEach { inventoryItem ->
                 val qty = inventoryItem.quantity
                 assertTrue(
@@ -237,10 +238,10 @@ class GenerateInventoryUseCaseTest {
 
     @Test
     fun `some items have unlimited stock over many generations`() = runTest {
-        val useCase = createUseCase()
         var foundUnlimited = false
         for (seed in 0 until 100) {
-            val result = useCase.invoke(ShopType.Blacksmith, Random(seed))
+            val useCase = createUseCase(random = Random(seed))
+            val result = useCase.invoke(ShopType.Blacksmith)
             if (result.any { it.isUnlimitedStock }) {
                 foundUnlimited = true
                 break

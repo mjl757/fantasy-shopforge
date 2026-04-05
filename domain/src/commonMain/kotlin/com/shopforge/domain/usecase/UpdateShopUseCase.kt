@@ -1,39 +1,39 @@
 package com.shopforge.domain.usecase
 
+import com.shopforge.domain.model.Shop
 import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.repository.ShopRepository
-import kotlinx.coroutines.flow.first
 
 /**
- * Updates an existing shop's name, type, and/or description.
+ * Updates an existing shop's name, type, and description.
  *
  * Business rules:
  * - Shop name must not be blank.
- * - Shop type is required.
  */
 class UpdateShopUseCase(
     private val shopRepository: ShopRepository,
     private val clock: () -> Long,
 ) {
+
     /**
+     * @param existingShop The current shop to update (used for id, createdAt).
+     * @param name The new name.
+     * @param type The new type.
+     * @param description The new description.
      * @throws IllegalArgumentException if [name] is blank.
-     * @throws NoSuchElementException if no shop with [shopId] exists.
      */
     suspend operator fun invoke(
-        shopId: Long,
+        existingShop: Shop,
         name: String,
         type: ShopType,
-        description: String? = null,
+        description: String?,
     ) {
         require(name.isNotBlank()) { "Shop name must not be blank" }
 
-        val existing = shopRepository.getShopById(shopId).first()
-            ?: throw NoSuchElementException("Shop with id $shopId not found")
-
-        val updated = existing.copy(
+        val updated = existingShop.copy(
             name = name.trim(),
             type = type,
-            description = description?.trim()?.ifEmpty { null },
+            description = description?.trim()?.ifBlank { null },
             updatedAt = clock(),
         )
         shopRepository.updateShop(updated)

@@ -15,7 +15,7 @@ class RemoveItemFromShopUseCaseTest {
 
     @Test
     fun `removes item from shop inventory`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
+        val shopId = createUseCase("Shop", ShopType.Blacksmith, null)
         val item = TestFixtures.sampleItem(id = 1L)
         addItemUseCase(shopId, item, 5, item.price)
 
@@ -26,7 +26,7 @@ class RemoveItemFromShopUseCaseTest {
 
     @Test
     fun `only removes specified item, keeps others`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
+        val shopId = createUseCase("Shop", ShopType.Blacksmith, null)
         val item1 = TestFixtures.sampleItem(id = 1L, name = "Sword")
         val item2 = TestFixtures.sampleItem(id = 2L, name = "Shield")
         addItemUseCase(shopId, item1, 3, item1.price)
@@ -41,7 +41,7 @@ class RemoveItemFromShopUseCaseTest {
 
     @Test
     fun `removing nonexistent item does not throw`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
+        val shopId = createUseCase("Shop", ShopType.Blacksmith, null)
         useCase(shopId, 999L) // Should complete without error
     }
 }

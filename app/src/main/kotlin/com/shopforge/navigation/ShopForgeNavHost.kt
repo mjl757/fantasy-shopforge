@@ -13,8 +13,10 @@ import com.shopforge.ui.additem.AddItemToShopScreen
 import com.shopforge.ui.additem.AddItemToShopViewModel
 import com.shopforge.ui.generate.GenerateShopScreen
 import com.shopforge.ui.generate.GenerateShopViewModel
-import com.shopforge.ui.screens.CreateShopScreen
-import com.shopforge.ui.screens.EditShopScreen
+import com.shopforge.ui.screen.createshop.CreateShopScreen
+import com.shopforge.ui.screen.createshop.CreateShopViewModel
+import com.shopforge.ui.screen.editshop.EditShopScreen
+import com.shopforge.ui.screen.editshop.EditShopViewModel
 import com.shopforge.ui.screens.ShopListScreen
 import com.shopforge.ui.shopdetail.ShopDetailScreen
 import com.shopforge.ui.shopdetail.ShopDetailViewModel
@@ -62,26 +64,29 @@ fun ShopForgeNavHost(
         }
 
         composable<AppRoute.CreateShop> {
+            val viewModel: CreateShopViewModel = koinViewModel()
             CreateShopScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
                 onShopCreated = { shopId ->
-                    navController.navigate(AppRoute.ShopDetail(shopId)) {
+                    navController.navigate(AppRoute.ShopDetail(shopId.toString())) {
                         popUpTo(AppRoute.ShopList) { inclusive = false }
                         launchSingleTop = true
                     }
                 },
-                onBack = { navController.popBackStack() },
             )
         }
 
         composable<AppRoute.EditShop> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.EditShop>()
+            val shopId = route.shopId.toLongOrNull() ?: return@composable
+            val viewModel: EditShopViewModel = koinViewModel(
+                parameters = { parametersOf(shopId) }
+            )
             EditShopScreen(
-                shopId = route.shopId,
-                onSaved = { navController.popBackStack() },
-                onDeleted = {
-                    navController.popBackStack(AppRoute.ShopList, inclusive = false)
-                },
-                onBack = { navController.popBackStack() },
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onShopDeleted = { navController.popBackStack(AppRoute.ShopList, inclusive = false) },
             )
         }
 

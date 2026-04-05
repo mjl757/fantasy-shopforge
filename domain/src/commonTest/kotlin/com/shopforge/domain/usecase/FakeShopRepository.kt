@@ -34,7 +34,7 @@ class FakeShopRepository : ShopRepository {
 
     override suspend fun updateShop(shop: Shop) {
         shops.update { current ->
-            require(shop.id in current) { "Shop ${shop.id} not found" }
+            if (shop.id !in current) throw NoSuchElementException("Shop ${shop.id} not found")
             current + (shop.id to shop)
         }
     }
@@ -88,6 +88,9 @@ class FakeShopRepository : ShopRepository {
     }
 
     override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {
+        shops.value.also { current ->
+            if (shopId !in current) throw NoSuchElementException("Shop $shopId not found")
+        }
         inventories.update { current ->
             current + (shopId to items)
         }

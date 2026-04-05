@@ -18,8 +18,9 @@ class UpdateShopUseCaseTest {
     fun `updates shop name, type, and description`() = runTest {
         val id = createUseCase("Old Name", ShopType.Blacksmith, "Old desc")
         currentTime += 1000
+        val existing = repository.getShopSnapshot(id)!!
 
-        useCase(id, "New Name", ShopType.MagicShop, "New desc")
+        useCase(existing, "New Name", ShopType.MagicShop, "New desc")
 
         val shop = repository.getShopSnapshot(id)!!
         assertEquals("New Name", shop.name)
@@ -29,10 +30,11 @@ class UpdateShopUseCaseTest {
 
     @Test
     fun `updates updatedAt timestamp`() = runTest {
-        val id = createUseCase("Shop", ShopType.Blacksmith)
+        val id = createUseCase("Shop", ShopType.Blacksmith, null)
         currentTime += 5000
+        val existing = repository.getShopSnapshot(id)!!
 
-        useCase(id, "Updated", ShopType.Blacksmith)
+        useCase(existing, "Updated", ShopType.Blacksmith, null)
 
         val shop = repository.getShopSnapshot(id)!!
         assertEquals(TestFixtures.FIXED_TIME, shop.createdAt)
@@ -41,9 +43,10 @@ class UpdateShopUseCaseTest {
 
     @Test
     fun `trims name and description`() = runTest {
-        val id = createUseCase("Shop", ShopType.Tavern)
+        val id = createUseCase("Shop", ShopType.Tavern, null)
+        val existing = repository.getShopSnapshot(id)!!
 
-        useCase(id, "  Trimmed  ", ShopType.Tavern, "  Trimmed desc  ")
+        useCase(existing, "  Trimmed  ", ShopType.Tavern, "  Trimmed desc  ")
 
         val shop = repository.getShopSnapshot(id)!!
         assertEquals("Trimmed", shop.name)
@@ -53,8 +56,9 @@ class UpdateShopUseCaseTest {
     @Test
     fun `empty description becomes null`() = runTest {
         val id = createUseCase("Shop", ShopType.Tavern, "Has desc")
+        val existing = repository.getShopSnapshot(id)!!
 
-        useCase(id, "Shop", ShopType.Tavern, description = "")
+        useCase(existing, "Shop", ShopType.Tavern, description = "")
 
         val shop = repository.getShopSnapshot(id)!!
         assertNull(shop.description)
@@ -62,17 +66,29 @@ class UpdateShopUseCaseTest {
 
     @Test
     fun `blank name throws IllegalArgumentException`() = runTest {
-        val id = createUseCase("Shop", ShopType.Blacksmith)
+        val id = createUseCase("Shop", ShopType.Blacksmith, null)
+        val existing = repository.getShopSnapshot(id)!!
 
         assertFailsWith<IllegalArgumentException> {
-            useCase(id, "", ShopType.Blacksmith)
+            useCase(existing, "", ShopType.Blacksmith, null)
         }
     }
 
     @Test
     fun `nonexistent shop throws NoSuchElementException`() = runTest {
+        // Build a shop object that doesn't exist in the repository
+        val nonExistentShop = repository.getShopSnapshot(1L)?.copy(id = 999L)
+            ?: com.shopforge.domain.model.Shop(
+                id = 999L,
+                name = "Ghost",
+                type = ShopType.Blacksmith,
+                description = null,
+                createdAt = currentTime,
+                updatedAt = currentTime,
+            )
+
         assertFailsWith<NoSuchElementException> {
-            useCase(999L, "Name", ShopType.Blacksmith)
+            useCase(nonExistentShop, "Name", ShopType.Blacksmith, null)
         }
     }
 }

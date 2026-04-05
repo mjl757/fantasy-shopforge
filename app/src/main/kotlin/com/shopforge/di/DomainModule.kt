@@ -6,6 +6,7 @@ import com.shopforge.domain.usecase.CreateShopUseCase
 import com.shopforge.domain.usecase.DecrementQuantityUseCase
 import com.shopforge.domain.usecase.DeleteShopUseCase
 import com.shopforge.domain.usecase.GenerateInventoryUseCase
+import com.shopforge.domain.usecase.GenerateShopNameUseCase
 import com.shopforge.domain.usecase.GenerateShopUseCase
 import com.shopforge.domain.usecase.GetAllShopsUseCase
 import com.shopforge.domain.usecase.GetShopWithInventoryUseCase
@@ -25,6 +26,7 @@ val domainModule = module {
     single { RemoveItemFromShopUseCase(get()) }
     single { DecrementQuantityUseCase(get()) }
     single { GenerateInventoryUseCase(get()) }
+    single { GenerateShopNameUseCase() }
     single { GenerateShopUseCase(get(), get(), clock = System::currentTimeMillis) }
     single { RegenerateInventoryUseCase(get(), get()) }
 }
