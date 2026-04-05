@@ -50,7 +50,7 @@ fun ShopForgeNavHost(
                 viewModel.events.collect { event ->
                     when (event) {
                         is ShopListEvent.NavigateToShopDetail ->
-                            navController.navigate(AppRoute.ShopDetail(event.shopId.toString()))
+                            navController.navigate(AppRoute.ShopDetail(event.shopId))
                         ShopListEvent.NavigateToCreateShop ->
                             navController.navigate(AppRoute.CreateShop)
                         ShopListEvent.NavigateToGenerateShop ->
@@ -71,13 +71,13 @@ fun ShopForgeNavHost(
         composable<AppRoute.ShopDetail> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.ShopDetail>()
             val viewModel: ShopDetailViewModel = koinViewModel(
-                parameters = { parametersOf(route.shopId.toLong()) }
+                parameters = { parametersOf(route.shopId) }
             )
             ShopDetailScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEditShop = { navController.navigate(AppRoute.EditShop(route.shopId)) },
-                onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId.toLong())) },
+                onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId)) },
             )
         }
 
@@ -87,7 +87,7 @@ fun ShopForgeNavHost(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onShopCreated = { shopId ->
-                    navController.navigate(AppRoute.ShopDetail(shopId.toString())) {
+                    navController.navigate(AppRoute.ShopDetail(shopId)) {
                         popUpTo(AppRoute.ShopList) { inclusive = false }
                         launchSingleTop = true
                     }
@@ -97,9 +97,8 @@ fun ShopForgeNavHost(
 
         composable<AppRoute.EditShop> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.EditShop>()
-            val shopId = route.shopId.toLongOrNull() ?: return@composable
             val viewModel: EditShopViewModel = koinViewModel(
-                parameters = { parametersOf(shopId) }
+                parameters = { parametersOf(route.shopId) }
             )
             EditShopScreen(
                 viewModel = viewModel,
@@ -113,7 +112,7 @@ fun ShopForgeNavHost(
             GenerateShopScreen(
                 viewModel = viewModel,
                 onShopGenerated = { shopId ->
-                    navController.navigate(AppRoute.ShopDetail(shopId.toString())) {
+                    navController.navigate(AppRoute.ShopDetail(shopId)) {
                         popUpTo(AppRoute.ShopList) { inclusive = false }
                         launchSingleTop = true
                     }

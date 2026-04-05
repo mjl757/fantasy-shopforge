@@ -17,7 +17,7 @@ sealed interface AppRoute {
 
     /** View a shop's details and manage its inventory. */
     @Serializable
-    data class ShopDetail(val shopId: String) : AppRoute
+    data class ShopDetail(val shopId: Long) : AppRoute
 
     /** Manually create a new shop. */
     @Serializable
@@ -25,7 +25,7 @@ sealed interface AppRoute {
 
     /** Edit an existing shop's metadata or regenerate its inventory. */
     @Serializable
-    data class EditShop(val shopId: String) : AppRoute
+    data class EditShop(val shopId: Long) : AppRoute
 
     /** Auto-generate a complete shop (name + inventory). */
     @Serializable

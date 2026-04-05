@@ -115,6 +115,27 @@ class ShopListViewModelTest {
     }
 
     @Test
+    fun `filter that matches zero shops shows Content with empty list`() = runTest {
+        val shops = listOf(
+            makeShop(id = 1, name = "The Gilded Anvil", type = ShopType.Blacksmith),
+            makeShop(id = 2, name = "Iron Works", type = ShopType.Blacksmith),
+        )
+        val repository = FakeShopRepository(initialShops = shops)
+        val viewModel = createViewModel(repository)
+
+        advanceUntilIdle()
+
+        viewModel.onFilterSelected(ShopType.MagicShop)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertInstanceOf(ShopListUiState.Content::class.java, state)
+        val content = state as ShopListUiState.Content
+        assertEquals(emptyList<Shop>(), content.shops)
+        assertEquals(ShopType.MagicShop, content.selectedFilter)
+    }
+
+    @Test
     fun `clearing filter shows all shops`() = runTest {
         val shops = listOf(
             makeShop(id = 1, name = "The Gilded Anvil", type = ShopType.Blacksmith),
@@ -234,8 +255,8 @@ class ShopListViewModelTest {
         name: String = "Test Shop",
         type: ShopType = ShopType.GeneralStore,
         description: String? = null,
-        createdAt: Long = System.currentTimeMillis(),
-        updatedAt: Long = System.currentTimeMillis(),
+        createdAt: Long = 0L,
+        updatedAt: Long = 0L,
     ) = Shop(
         id = id,
         name = name,

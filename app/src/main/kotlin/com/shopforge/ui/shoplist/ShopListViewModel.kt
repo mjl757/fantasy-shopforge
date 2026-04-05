@@ -53,7 +53,7 @@ class ShopListViewModel(
                 ShopSortOrder.CreatedDate -> filtered.sortedByDescending { it.createdAt }
             }
 
-            if (shops.isEmpty()) {
+            if (shops.isEmpty() && filter == null) {
                 ShopListUiState.Empty
             } else {
                 ShopListUiState.Content(
