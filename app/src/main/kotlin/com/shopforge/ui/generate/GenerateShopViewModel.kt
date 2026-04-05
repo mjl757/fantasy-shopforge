@@ -59,7 +59,7 @@ class GenerateShopViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val shopId = generateShopUseCase.invoke(_uiState.value.selectedType)
+                val shopId = generateShopUseCase(_uiState.value.selectedType)
                 _uiState.update { it.copy(isLoading = false, generatedShopId = shopId) }
             } catch (e: Exception) {
                 _uiState.update {
