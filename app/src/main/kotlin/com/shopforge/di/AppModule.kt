@@ -9,5 +9,5 @@ import org.koin.dsl.module
 val appModule = module {
     viewModel { (shopId: Long) -> ShopDetailViewModel(shopId, get(), get()) }
     viewModel { GenerateShopViewModel(get()) }
-    viewModel { (shopId: Long) -> AddItemToShopViewModel(shopId, get(), get()) }
+    viewModel { (shopId: Long) -> AddItemToShopViewModel(shopId, get(), get(), get()) }
 }

@@ -57,7 +57,7 @@ fun ShopForgeNavHost(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEditShop = { navController.navigate(AppRoute.EditShop(route.shopId)) },
-                onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId)) },
+                onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId.toLong())) },
             )
         }
 
@@ -102,14 +102,16 @@ fun ShopForgeNavHost(
         composable<AppRoute.AddItemToShop> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.AddItemToShop>()
             val viewModel: AddItemToShopViewModel = koinViewModel(
-                parameters = { parametersOf(route.shopId.toLong()) }
+                parameters = { parametersOf(route.shopId) }
             )
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             AddItemToShopScreen(
                 uiState = uiState,
                 onSearchQueryChanged = viewModel::onSearchQueryChanged,
                 onCategorySelected = viewModel::onCategorySelected,
-                onAddItem = viewModel::addItem,
+                onItemTap = viewModel::onItemSelected,
+                onAddConfirmed = viewModel::onAddConfirmed,
+                onAddDismissed = viewModel::onAddDismissed,
                 onClearError = viewModel::clearError,
                 onNavigateBack = { navController.popBackStack() },
             )

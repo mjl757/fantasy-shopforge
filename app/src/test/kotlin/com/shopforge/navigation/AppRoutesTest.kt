@@ -85,15 +85,15 @@ class AppRoutesTest {
 
     @Test
     fun `AddItemToShop carries shopId`() {
-        val route = AppRoute.AddItemToShop(shopId = "shop-99")
-        assertEquals("shop-99", route.shopId)
+        val route = AppRoute.AddItemToShop(shopId = 99L)
+        assertEquals(99L, route.shopId)
     }
 
     @Test
     fun `AddItemToShop equality is based on shopId`() {
-        val a = AppRoute.AddItemToShop("one")
-        val b = AppRoute.AddItemToShop("one")
-        val c = AppRoute.AddItemToShop("two")
+        val a = AppRoute.AddItemToShop(1L)
+        val b = AppRoute.AddItemToShop(1L)
+        val c = AppRoute.AddItemToShop(2L)
         assertEquals(a, b)
         assertNotEquals(a, c)
     }
@@ -110,7 +110,7 @@ class AppRoutesTest {
             AppRoute.CreateShop,
             AppRoute.EditShop("id"),
             AppRoute.GenerateShop,
-            AppRoute.AddItemToShop("id"),
+            AppRoute.AddItemToShop(0L),
         )
         assertEquals(6, routes.size, "Expected exactly 6 route types")
     }
@@ -129,7 +129,7 @@ class AppRoutesTest {
     @Test
     fun `ShopDetail and AddItemToShop with same shopId are not equal`() {
         val detail: Any = AppRoute.ShopDetail("same-id")
-        val add: Any = AppRoute.AddItemToShop("same-id")
+        val add: Any = AppRoute.AddItemToShop(99L)
         assertNotEquals(detail, add)
     }
 }

@@ -63,23 +63,21 @@ fun AddItemToShopScreen(
     uiState: AddItemToShopUiState,
     onSearchQueryChanged: (String) -> Unit,
     onCategorySelected: (ItemCategory?) -> Unit,
-    onAddItem: (itemId: Long, quantity: Int?) -> Unit,
+    onItemTap: (Item) -> Unit,
+    onAddConfirmed: (quantity: Int?) -> Unit,
+    onAddDismissed: () -> Unit,
     onClearError: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show error via snackbar
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
+    // Keyed on error.id so repeated identical messages still trigger the snackbar.
+    LaunchedEffect(uiState.error?.id) {
+        uiState.error?.let { error ->
+            snackbarHostState.showSnackbar(error.message)
             onClearError()
         }
     }
-
-    // Quantity picker dialog state
-    var showQuantityDialog by remember { mutableStateOf(false) }
-    var selectedItemForAdd by remember { mutableStateOf<Item?>(null) }
 
     Scaffold(
         topBar = {
@@ -182,10 +180,7 @@ fun AddItemToShopScreen(
                             CatalogItemRow(
                                 item = item,
                                 isAdded = isAdded,
-                                onTap = {
-                                    selectedItemForAdd = item
-                                    showQuantityDialog = true
-                                },
+                                onTap = { onItemTap(item) },
                             )
                         }
                     }
@@ -194,21 +189,13 @@ fun AddItemToShopScreen(
         }
     }
 
-    // Quantity picker dialog
-    if (showQuantityDialog && selectedItemForAdd != null) {
+    // Quantity picker dialog — shown when the ViewModel has a pending item selected.
+    // Dialog state (quantity, isUnlimited) is local since it resets on each open.
+    uiState.pendingAddItem?.let { item ->
         QuantityPickerDialog(
-            itemName = selectedItemForAdd!!.name,
-            onConfirm = { quantity ->
-                selectedItemForAdd?.let { item ->
-                    onAddItem(item.id, quantity)
-                }
-                showQuantityDialog = false
-                selectedItemForAdd = null
-            },
-            onDismiss = {
-                showQuantityDialog = false
-                selectedItemForAdd = null
-            },
+            itemName = item.name,
+            onConfirm = onAddConfirmed,
+            onDismiss = onAddDismissed,
         )
     }
 }
@@ -278,6 +265,9 @@ private fun RarityBadge(rarity: Rarity) {
 /**
  * Dialog for selecting the quantity of an item to add.
  * Supports a specific number (default 1) or unlimited stock.
+ *
+ * Note: the minimum quantity the dialog produces is 1. The [AddItemToShopUseCase]
+ * allows quantity >= 0, so quantity = 0 cannot be expressed here by design.
  */
 @Composable
 private fun QuantityPickerDialog(
@@ -299,7 +289,7 @@ private fun QuantityPickerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    // Decrement button
+                    // Decrement button: minimum is 1 (dialog enforces quantity > 0)
                     TextButton(
                         onClick = { if (quantity > 1) quantity-- },
                         enabled = !isUnlimited && quantity > 1,
