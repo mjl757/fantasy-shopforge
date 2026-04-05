@@ -21,9 +21,9 @@ class GetAllShopsUseCaseTest {
 
     @Test
     fun `returns all created shops`() = runTest {
-        createUseCase("Shop A", ShopType.Blacksmith)
-        createUseCase("Shop B", ShopType.Tavern)
-        createUseCase("Shop C", ShopType.MagicShop)
+        createUseCase("Shop A", ShopType.Blacksmith, null)
+        createUseCase("Shop B", ShopType.Tavern, null)
+        createUseCase("Shop C", ShopType.MagicShop, null)
 
         val shops = useCase().first()
         assertEquals(3, shops.size)

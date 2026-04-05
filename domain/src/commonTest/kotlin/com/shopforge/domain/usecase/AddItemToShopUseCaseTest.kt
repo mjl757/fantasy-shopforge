@@ -15,7 +15,7 @@ class AddItemToShopUseCaseTest {
 
     @Test
     fun `adds item to shop inventory`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Blacksmith)
+        val shopId = createUseCase("Shop", ShopType.Blacksmith, null)
         val item = TestFixtures.sampleItem()
         val adjustedPrice = Price.ofGold(16)
 
@@ -30,7 +30,7 @@ class AddItemToShopUseCaseTest {
 
     @Test
     fun `adds item with unlimited quantity`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.Tavern)
+        val shopId = createUseCase("Shop", ShopType.Tavern, null)
         val item = TestFixtures.sampleItem()
 
         useCase(shopId, item, null, item.price)
@@ -41,7 +41,7 @@ class AddItemToShopUseCaseTest {
 
     @Test
     fun `adds multiple different items`() = runTest {
-        val shopId = createUseCase("Shop", ShopType.GeneralStore)
+        val shopId = createUseCase("Shop", ShopType.GeneralStore, null)
         val item1 = TestFixtures.sampleItem(id = 1L, name = "Rope")
         val item2 = TestFixtures.sampleItem(id = 2L, name = "Torch")
 

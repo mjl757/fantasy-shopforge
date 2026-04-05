@@ -39,7 +39,7 @@ class GenerateShopUseCase(
         )
 
         val shopId = shopRepository.createShop(shop)
-        shopRepository.replaceInventory(shopId, generateInventoryUseCase(type, random))
+        shopRepository.replaceInventory(shopId, generateInventoryUseCase(type))
 
         return shopId
     }

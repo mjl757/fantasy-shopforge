@@ -15,7 +15,7 @@ class DeleteShopUseCaseTest {
 
     @Test
     fun `deletes existing shop`() = runTest {
-        val id = createUseCase("Doomed Shop", ShopType.Blacksmith)
+        val id = createUseCase("Doomed Shop", ShopType.Blacksmith, null)
 
         useCase(id)
 
@@ -24,7 +24,7 @@ class DeleteShopUseCaseTest {
 
     @Test
     fun `deletes shop inventory along with shop`() = runTest {
-        val id = createUseCase("Shop", ShopType.Blacksmith)
+        val id = createUseCase("Shop", ShopType.Blacksmith, null)
         val item = TestFixtures.sampleItem()
         addItemUseCase(id, item, 5, item.price)
 

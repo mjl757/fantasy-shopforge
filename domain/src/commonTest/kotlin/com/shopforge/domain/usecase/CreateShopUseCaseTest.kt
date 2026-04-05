@@ -27,7 +27,7 @@ class CreateShopUseCaseTest {
 
     @Test
     fun `creates shop without description`() = runTest {
-        val id = useCase("Magic Emporium", ShopType.MagicShop)
+        val id = useCase("Magic Emporium", ShopType.MagicShop, null)
 
         val shop = repository.getShopSnapshot(id)!!
         assertNull(shop.description)
@@ -35,7 +35,7 @@ class CreateShopUseCaseTest {
 
     @Test
     fun `trims shop name`() = runTest {
-        val id = useCase("  Padded Name  ", ShopType.GeneralStore)
+        val id = useCase("  Padded Name  ", ShopType.GeneralStore, null)
 
         val shop = repository.getShopSnapshot(id)!!
         assertEquals("Padded Name", shop.name)
@@ -60,28 +60,28 @@ class CreateShopUseCaseTest {
     @Test
     fun `blank name throws IllegalArgumentException`() = runTest {
         assertFailsWith<IllegalArgumentException> {
-            useCase("", ShopType.Blacksmith)
+            useCase("", ShopType.Blacksmith, null)
         }
     }
 
     @Test
     fun `whitespace-only name throws IllegalArgumentException`() = runTest {
         assertFailsWith<IllegalArgumentException> {
-            useCase("   ", ShopType.Blacksmith)
+            useCase("   ", ShopType.Blacksmith, null)
         }
     }
 
     @Test
     fun `shop is created with empty inventory`() = runTest {
-        val id = useCase("Empty Shop", ShopType.GeneralStore)
+        val id = useCase("Empty Shop", ShopType.GeneralStore, null)
 
         assertTrue(repository.getInventorySnapshot(id).isEmpty())
     }
 
     @Test
     fun `returns generated shop id`() = runTest {
-        val id1 = useCase("Shop 1", ShopType.Blacksmith)
-        val id2 = useCase("Shop 2", ShopType.Tavern)
+        val id1 = useCase("Shop 1", ShopType.Blacksmith, null)
+        val id2 = useCase("Shop 2", ShopType.Tavern, null)
 
         assertTrue(id1 > 0)
         assertTrue(id2 > id1)
