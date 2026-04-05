@@ -8,11 +8,9 @@ import com.shopforge.domain.usecase.AddItemToShopUseCase
 import com.shopforge.domain.usecase.GetAllItemsUseCase
 import com.shopforge.domain.usecase.GetShopWithInventoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,7 +25,6 @@ data class UiError(val id: Long = System.nanoTime(), val message: String)
  */
 data class AddItemToShopUiState(
     val allItems: List<Item> = emptyList(),
-    val filteredItems: List<Item> = emptyList(),
     val searchQuery: String = "",
     val selectedCategory: ItemCategory? = null,
     val addedItemIds: Set<Long> = emptySet(),
@@ -35,7 +32,12 @@ data class AddItemToShopUiState(
     val error: UiError? = null,
     /** Non-null when the quantity-picker dialog should be shown for this item. */
     val pendingAddItem: Item? = null,
-)
+) {
+    val filteredItems: List<Item> = allItems.filter { item ->
+        (searchQuery.isBlank() || item.name.contains(searchQuery, ignoreCase = true)) &&
+            (selectedCategory == null || item.category == selectedCategory)
+    }
+}
 
 /**
  * ViewModel for browsing the item catalog and adding items to a shop's inventory.
@@ -52,57 +54,30 @@ class AddItemToShopViewModel(
     private val getShopWithInventoryUseCase: GetShopWithInventoryUseCase,
 ) : ViewModel() {
 
-    private val searchQuery = MutableStateFlow("")
-    private val selectedCategory = MutableStateFlow<ItemCategory?>(null)
-    private val addedItemIds = MutableStateFlow<Set<Long>>(emptySet())
-    private val error = MutableStateFlow<UiError?>(null)
-    private val pendingAddItem = MutableStateFlow<Item?>(null)
-
-    val uiState: StateFlow<AddItemToShopUiState> = combine(
-        combine(getAllItemsUseCase(), searchQuery, selectedCategory) { items, query, category ->
-            Triple(items, query, category)
-        },
-        addedItemIds,
-        error,
-        pendingAddItem,
-    ) { (items, query, category), added, err, pending ->
-        val filtered = items.filter { item ->
-            (query.isBlank() || item.name.contains(query, ignoreCase = true)) &&
-                (category == null || item.category == category)
-        }
-        AddItemToShopUiState(
-            allItems = items,
-            filteredItems = filtered,
-            searchQuery = query,
-            selectedCategory = category,
-            addedItemIds = added,
-            isLoading = false,
-            error = err,
-            pendingAddItem = pending,
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = AddItemToShopUiState(),
-    )
+    private val _uiState = MutableStateFlow(AddItemToShopUiState())
+    val uiState: StateFlow<AddItemToShopUiState> = _uiState.asStateFlow()
 
     init {
-        // Seed addedItemIds with items already present in this shop so the check
-        // marks are correct even if the user navigated away and back.
         viewModelScope.launch {
             val existing = getShopWithInventoryUseCase(shopId).first()?.inventory
             if (!existing.isNullOrEmpty()) {
-                addedItemIds.update { existing.map { it.item.id }.toSet() }
+                _uiState.update { it.copy(addedItemIds = existing.map { inv -> inv.item.id }.toSet()) }
+            }
+        }
+
+        viewModelScope.launch {
+            getAllItemsUseCase().collect { items ->
+                _uiState.update { it.copy(allItems = items, isLoading = false) }
             }
         }
     }
 
     fun onSearchQueryChanged(query: String) {
-        searchQuery.update { query }
+        _uiState.update { it.copy(searchQuery = query) }
     }
 
     fun onCategorySelected(category: ItemCategory?) {
-        selectedCategory.update { category }
+        _uiState.update { it.copy(selectedCategory = category) }
     }
 
     /**
@@ -110,7 +85,7 @@ class AddItemToShopViewModel(
      * Opens the quantity-picker dialog for that item.
      */
     fun onItemSelected(item: Item) {
-        pendingAddItem.update { item }
+        _uiState.update { it.copy(pendingAddItem = item) }
     }
 
     /**
@@ -118,25 +93,24 @@ class AddItemToShopViewModel(
      * A null [quantity] represents unlimited stock.
      */
     fun onAddConfirmed(quantity: Int?) {
-        val item = pendingAddItem.value ?: return
-        pendingAddItem.update { null }
+        val item = _uiState.value.pendingAddItem ?: return
+        _uiState.update { it.copy(pendingAddItem = null) }
         viewModelScope.launch {
             try {
                 addItemToShopUseCase(shopId, item, quantity, item.price)
-                addedItemIds.update { it + item.id }
-                error.update { null }
+                _uiState.update { it.copy(addedItemIds = it.addedItemIds + item.id, error = null) }
             } catch (e: Exception) {
-                error.update { UiError(message = e.message ?: "Failed to add item") }
+                _uiState.update { it.copy(error = UiError(message = e.message ?: "Failed to add item")) }
             }
         }
     }
 
     /** Called when the user dismisses the quantity-picker dialog without confirming. */
     fun onAddDismissed() {
-        pendingAddItem.update { null }
+        _uiState.update { it.copy(pendingAddItem = null) }
     }
 
     fun clearError() {
-        error.update { null }
+        _uiState.update { it.copy(error = null) }
     }
 }
