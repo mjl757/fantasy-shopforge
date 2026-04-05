@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,7 +49,11 @@ class EditShopViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val shop = getShopFlow(shopId).filterNotNull().first()
+                val shop = getShopFlow(shopId).first()
+                if (shop == null) {
+                    _uiState.update { it.copy(isLoading = false, generalError = "Shop not found") }
+                    return@launch
+                }
                 originalShop = shop
                 _uiState.update {
                     it.copy(
@@ -61,7 +64,7 @@ class EditShopViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, nameError = "Failed to load shop") }
+                _uiState.update { it.copy(isLoading = false, generalError = "Failed to load shop") }
             }
         }
     }
@@ -102,7 +105,9 @@ class EditShopViewModel(
                 )
                 _events.emit(EditShopEvent.ShopUpdated)
             } catch (e: Exception) {
-                _uiState.update { it.copy(isSaving = false, nameError = e.message) }
+                _uiState.update { it.copy(nameError = e.message) }
+            } finally {
+                _uiState.update { it.copy(isSaving = false) }
             }
         }
     }
@@ -119,14 +124,14 @@ class EditShopViewModel(
 
     fun confirmRegenerateInventory() {
         _uiState.update { it.copy(showRegenerateConfirmation = false) }
-        val type = _uiState.value.selectedType ?: return
+        val type = originalShop?.type ?: return
 
         viewModelScope.launch {
             try {
                 regenerateInventoryUseCase(shopId, type)
                 _events.emit(EditShopEvent.InventoryRegenerated)
             } catch (e: Exception) {
-                _uiState.update { it.copy(nameError = "Failed to regenerate inventory") }
+                _uiState.update { it.copy(generalError = "Failed to regenerate inventory") }
             }
         }
     }
@@ -149,7 +154,7 @@ class EditShopViewModel(
                 deleteShopUseCase(shopId)
                 _events.emit(EditShopEvent.ShopDeleted)
             } catch (e: Exception) {
-                _uiState.update { it.copy(nameError = "Failed to delete shop") }
+                _uiState.update { it.copy(generalError = "Failed to delete shop") }
             }
         }
     }
@@ -164,6 +169,7 @@ data class EditShopUiState(
     val selectedType: ShopType? = null,
     val description: String = "",
     val nameError: String? = null,
+    val generalError: String? = null,
     val isSaving: Boolean = false,
     val showRegenerateConfirmation: Boolean = false,
     val showDeleteConfirmation: Boolean = false,

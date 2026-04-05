@@ -146,7 +146,7 @@ class CreateShopViewModelTest {
     }
 
     @Test
-    fun `saveShop trims name and description`() = runTest {
+    fun `saveShop stores trimmed name and description via CreateShopUseCase`() = runTest {
         viewModel.onNameChanged("  The Iron Forge  ")
         viewModel.onTypeSelected(ShopType.Blacksmith)
         viewModel.onDescriptionChanged("  A fine smithy  ")

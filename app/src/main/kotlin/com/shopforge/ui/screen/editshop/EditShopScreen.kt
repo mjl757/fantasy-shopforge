@@ -22,13 +22,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -45,7 +48,13 @@ fun EditShopScreen(
     onNavigateBack: () -> Unit,
     onShopDeleted: () -> Unit = onNavigateBack,
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.generalError) {
+        val error = state.generalError ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(error)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -111,6 +120,7 @@ fun EditShopScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         if (state.isLoading) {
             Column(
@@ -174,6 +184,7 @@ fun EditShopScreen(
                 // Regenerate Inventory Button
                 OutlinedButton(
                     onClick = viewModel::requestRegenerateInventory,
+                    enabled = !state.isSaving,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("Regenerate Inventory")
@@ -182,6 +193,7 @@ fun EditShopScreen(
                 // Delete Shop Button (destructive)
                 Button(
                     onClick = viewModel::requestDeleteShop,
+                    enabled = !state.isSaving,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError,

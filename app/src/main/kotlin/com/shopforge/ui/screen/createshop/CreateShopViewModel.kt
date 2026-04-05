@@ -70,7 +70,9 @@ class CreateShopViewModel(
                 )
                 _events.emit(CreateShopEvent.ShopCreated(shopId))
             } catch (e: Exception) {
-                _uiState.update { it.copy(isSaving = false, nameError = e.message) }
+                _uiState.update { it.copy(nameError = e.message) }
+            } finally {
+                _uiState.update { it.copy(isSaving = false) }
             }
         }
     }

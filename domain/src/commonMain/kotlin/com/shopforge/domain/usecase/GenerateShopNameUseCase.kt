@@ -14,7 +14,16 @@ class GenerateShopNameUseCase(
 ) {
 
     operator fun invoke(shopType: ShopType): String {
-        val templates = nameTemplates[shopType] ?: error("No name templates for $shopType")
+        val templates = when (shopType) {
+            ShopType.Blacksmith -> nameTemplates[ShopType.Blacksmith]
+            ShopType.MagicShop -> nameTemplates[ShopType.MagicShop]
+            ShopType.GeneralStore -> nameTemplates[ShopType.GeneralStore]
+            ShopType.Alchemist -> nameTemplates[ShopType.Alchemist]
+            ShopType.Fletcher -> nameTemplates[ShopType.Fletcher]
+            ShopType.Tavern -> nameTemplates[ShopType.Tavern]
+            ShopType.Temple -> nameTemplates[ShopType.Temple]
+            ShopType.ExoticGoods -> nameTemplates[ShopType.ExoticGoods]
+        } ?: error("No name templates for $shopType")
         return templates[random.nextInt(templates.size)]
     }
 

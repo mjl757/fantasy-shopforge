@@ -79,8 +79,9 @@ fun ShopForgeNavHost(
 
         composable<AppRoute.EditShop> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.EditShop>()
+            val shopId = route.shopId.toLongOrNull() ?: return@composable
             val viewModel: EditShopViewModel = koinViewModel(
-                parameters = { parametersOf(route.shopId.toLong()) }
+                parameters = { parametersOf(shopId) }
             )
             EditShopScreen(
                 viewModel = viewModel,
