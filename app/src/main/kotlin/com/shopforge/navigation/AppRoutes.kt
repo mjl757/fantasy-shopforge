@@ -33,5 +33,5 @@ sealed interface AppRoute {
 
     /** Browse the item catalog to add items to a specific shop. */
     @Serializable
-    data class AddItemToShop(val shopId: String) : AppRoute
+    data class AddItemToShop(val shopId: Long) : AppRoute
 }

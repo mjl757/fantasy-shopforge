@@ -1,20 +1,23 @@
 package com.shopforge.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.shopforge.ui.screens.AddItemToShopScreen
-import com.shopforge.ui.screens.CreateShopScreen
-import com.shopforge.ui.screens.EditShopScreen
+import com.shopforge.ui.additem.AddItemToShopScreen
+import com.shopforge.ui.additem.AddItemToShopViewModel
 import com.shopforge.ui.generate.GenerateShopScreen
 import com.shopforge.ui.generate.GenerateShopViewModel
+import com.shopforge.ui.screens.CreateShopScreen
+import com.shopforge.ui.screens.EditShopScreen
 import com.shopforge.ui.screens.ShopListScreen
-import com.shopforge.ui.shopdetail.ShopDetailViewModel
 import com.shopforge.ui.shopdetail.ShopDetailScreen
+import com.shopforge.ui.shopdetail.ShopDetailViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -54,7 +57,7 @@ fun ShopForgeNavHost(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEditShop = { navController.navigate(AppRoute.EditShop(route.shopId)) },
-                onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId)) },
+                onAddItem = { navController.navigate(AppRoute.AddItemToShop(route.shopId.toLong())) },
             )
         }
 
@@ -98,9 +101,19 @@ fun ShopForgeNavHost(
 
         composable<AppRoute.AddItemToShop> { backStackEntry ->
             val route = backStackEntry.toRoute<AppRoute.AddItemToShop>()
+            val viewModel: AddItemToShopViewModel = koinViewModel(
+                parameters = { parametersOf(route.shopId) }
+            )
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             AddItemToShopScreen(
-                shopId = route.shopId,
-                onBack = { navController.popBackStack() },
+                uiState = uiState,
+                onSearchQueryChanged = viewModel::onSearchQueryChanged,
+                onCategorySelected = viewModel::onCategorySelected,
+                onItemTap = viewModel::onItemSelected,
+                onAddConfirmed = viewModel::onAddConfirmed,
+                onAddDismissed = viewModel::onAddDismissed,
+                onClearError = viewModel::clearError,
+                onNavigateBack = { navController.popBackStack() },
             )
         }
     }

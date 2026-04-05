@@ -1,6 +1,7 @@
 package com.shopforge.di
 
 import com.shopforge.domain.usecase.AddItemToShopUseCase
+import com.shopforge.domain.usecase.GetAllItemsUseCase
 import com.shopforge.domain.usecase.CreateShopUseCase
 import com.shopforge.domain.usecase.DecrementQuantityUseCase
 import com.shopforge.domain.usecase.DeleteShopUseCase
@@ -20,6 +21,7 @@ val domainModule = module {
     single { UpdateShopUseCase(get(), clock = System::currentTimeMillis) }
     single { DeleteShopUseCase(get()) }
     single { AddItemToShopUseCase(get()) }
+    single { GetAllItemsUseCase(get()) }
     single { RemoveItemFromShopUseCase(get()) }
     single { DecrementQuantityUseCase(get()) }
     single { GenerateInventoryUseCase(get()) }
