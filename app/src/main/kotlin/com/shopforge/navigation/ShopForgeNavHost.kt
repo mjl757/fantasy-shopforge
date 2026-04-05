@@ -92,6 +92,7 @@ fun ShopForgeNavHost(
                         launchSingleTop = true
                     }
                 },
+                onBack = { navController.popBackStack() },
             )
         }
 

@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
+ * Wraps an error message with a unique ID so that consecutive identical errors
+ * each produce a new key for [LaunchedEffect], ensuring the snackbar always fires.
+ */
+data class UiError(val id: Long = System.nanoTime(), val message: String)
+
+/**
  * UI state for the Generate Shop screen.
  */
 data class GenerateShopUiState(
@@ -18,8 +24,8 @@ data class GenerateShopUiState(
     val selectedType: ShopType? = null,
     /** Whether shop generation is in progress. */
     val isLoading: Boolean = false,
-    /** Error message if generation failed. */
-    val error: String? = null,
+    /** Error to display, or null if none. */
+    val error: UiError? = null,
     /** The ID of the generated shop, triggering navigation when non-null. */
     val generatedShopId: Long? = null,
 )
@@ -59,7 +65,7 @@ class GenerateShopViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to generate shop",
+                        error = UiError(message = e.message ?: "Failed to generate shop"),
                     )
                 }
             }

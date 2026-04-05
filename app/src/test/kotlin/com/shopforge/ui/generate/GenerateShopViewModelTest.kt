@@ -10,6 +10,7 @@ import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.repository.ItemRepository
 import com.shopforge.domain.repository.ShopRepository
+import com.shopforge.domain.usecase.GenerateInventoryUseCase
 import com.shopforge.domain.usecase.GenerateShopUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -82,19 +83,19 @@ class GenerateShopViewModelTest {
         val shopRepo = FakeShopRepository()
         val viewModel = createViewModel(shopRepository = shopRepo)
 
-        viewModel.selectType(ShopType.Blacksmith)
-        viewModel.generate()
-
         viewModel.uiState.test {
-            var state = awaitItem()
-            while (state.generatedShopId == null && state.error == null) {
-                state = awaitItem()
-            }
-            assertFalse(state.isLoading)
-            assertNotNull(state.generatedShopId)
-            assertNull(state.error)
+            awaitItem() // initial state
+            viewModel.selectType(ShopType.Blacksmith)
+            awaitItem() // state with type selected
+            viewModel.generate()
 
-            // Verify the shop was created with the correct type
+            val loading = awaitItem()
+            assertTrue(loading.isLoading)
+            val success = awaitItem()
+            assertFalse(success.isLoading)
+            assertNotNull(success.generatedShopId)
+            assertNull(success.error)
+
             val createdShop = shopRepo.createdShops.first()
             assertEquals(ShopType.Blacksmith, createdShop.type)
         }
@@ -105,18 +106,17 @@ class GenerateShopViewModelTest {
         val shopRepo = FakeShopRepository()
         val viewModel = createViewModel(shopRepository = shopRepo)
 
-        // No type selected -- should still succeed
-        viewModel.generate()
-
         viewModel.uiState.test {
-            var state = awaitItem()
-            while (state.generatedShopId == null && state.error == null) {
-                state = awaitItem()
-            }
-            assertNotNull(state.generatedShopId)
-            assertNull(state.error)
+            awaitItem() // initial state
+            viewModel.generate()
 
-            // A shop was created (with whatever random type the seeded Random chose)
+            val loading = awaitItem()
+            assertTrue(loading.isLoading)
+            val success = awaitItem()
+            assertFalse(success.isLoading)
+            assertNotNull(success.generatedShopId)
+            assertNull(success.error)
+
             assertTrue(shopRepo.createdShops.isNotEmpty())
         }
     }
@@ -149,20 +149,16 @@ class GenerateShopViewModelTest {
         val failingRepo = FailingShopRepository(RuntimeException(errorMessage))
         val viewModel = createViewModel(shopRepository = failingRepo)
 
-        viewModel.generate()
-
         viewModel.uiState.test {
-            var state = awaitItem()
-            while (state.error == null && !state.isLoading) {
-                state = awaitItem()
-            }
-            // Advance through loading to error
-            while (state.isLoading) {
-                state = awaitItem()
-            }
-            assertFalse(state.isLoading)
-            assertEquals(errorMessage, state.error)
-            assertNull(state.generatedShopId)
+            awaitItem() // initial state
+            viewModel.generate()
+
+            val loading = awaitItem()
+            assertTrue(loading.isLoading)
+            val error = awaitItem()
+            assertFalse(error.isLoading)
+            assertEquals(errorMessage, error.error?.message)
+            assertNull(error.generatedShopId)
         }
     }
 
@@ -170,14 +166,14 @@ class GenerateShopViewModelTest {
     fun `onNavigated resets generated shop id`() = runTest {
         val viewModel = createViewModel()
 
-        viewModel.generate()
-
         viewModel.uiState.test {
-            var state = awaitItem()
-            while (state.generatedShopId == null) {
-                state = awaitItem()
-            }
-            assertNotNull(state.generatedShopId)
+            awaitItem() // initial state
+            viewModel.generate()
+
+            val loading = awaitItem()
+            assertTrue(loading.isLoading)
+            val success = awaitItem()
+            assertNotNull(success.generatedShopId)
 
             viewModel.onNavigated()
 
@@ -192,13 +188,16 @@ class GenerateShopViewModelTest {
         val viewModel = createViewModel(shopRepository = shopRepo)
 
         viewModel.selectType(ShopType.Blacksmith)
-        viewModel.generate()
 
         viewModel.uiState.test {
-            var state = awaitItem()
-            while (state.generatedShopId == null) {
-                state = awaitItem()
-            }
+            awaitItem() // state with type selected
+            viewModel.generate()
+
+            val loading = awaitItem()
+            assertTrue(loading.isLoading)
+            val success = awaitItem()
+            assertNotNull(success.generatedShopId)
+
             val shop = shopRepo.createdShops.first()
             assertTrue(shop.name.isNotBlank(), "Shop name should not be blank")
             assertTrue(shop.name.contains(" "), "Shop name should have prefix and suffix")
@@ -226,9 +225,10 @@ class GenerateShopViewModelTest {
         shopRepository: ShopRepository = FakeShopRepository(),
     ): GenerateShopViewModel {
         val itemRepo = FakeItemRepository(catalogItems)
+        val generateInventoryUseCase = GenerateInventoryUseCase(itemRepo)
         val useCase = GenerateShopUseCase(
             shopRepository = shopRepository,
-            itemRepository = itemRepo,
+            generateInventoryUseCase = generateInventoryUseCase,
             random = Random(seed = 42),
             clock = { 1000L },
         )

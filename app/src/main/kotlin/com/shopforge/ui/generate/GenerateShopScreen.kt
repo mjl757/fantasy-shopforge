@@ -14,10 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -26,12 +30,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shopforge.domain.model.ShopType
 
 /**
@@ -41,14 +45,16 @@ import com.shopforge.domain.model.ShopType
  * @param viewModel The [GenerateShopViewModel] managing this screen's state.
  * @param onShopGenerated Callback invoked with the shop ID when generation succeeds,
  *                        triggering navigation to the Shop Detail screen.
+ * @param onBack Callback invoked when the user navigates back.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun GenerateShopScreen(
     viewModel: GenerateShopViewModel,
     onShopGenerated: (Long) -> Unit,
+    onBack: () -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Navigate on successful generation
@@ -59,10 +65,10 @@ fun GenerateShopScreen(
         }
     }
 
-    // Show error in snackbar
-    LaunchedEffect(uiState.error) {
+    // Show error in snackbar; keyed on error.id so repeated identical messages still trigger
+    LaunchedEffect(uiState.error?.id) {
         uiState.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
+            snackbarHostState.showSnackbar(error.message)
         }
     }
 
@@ -70,6 +76,11 @@ fun GenerateShopScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Generate Shop") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -116,7 +127,7 @@ fun GenerateShopScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Generate button
+                // Generate button — text stays visible; the animated block below shows loading feedback
                 Button(
                     onClick = { viewModel.generate() },
                     enabled = !uiState.isLoading,
@@ -124,18 +135,10 @@ fun GenerateShopScreen(
                         .fillMaxWidth()
                         .height(56.dp),
                 ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Text(
-                            text = "Generate Shop",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    }
+                    Text(
+                        text = "Generate Shop",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                 }
 
                 // Loading animation below button
@@ -148,7 +151,7 @@ fun GenerateShopScreen(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Generating your shop...",

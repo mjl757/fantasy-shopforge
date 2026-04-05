@@ -4,11 +4,8 @@ import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
-import com.shopforge.domain.model.Shop
-import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.repository.ItemRepository
-import com.shopforge.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -40,10 +37,10 @@ class GenerateShopUseCaseTest {
         val shopRepo = FakeShopRepository()
         val useCase = createUseCase(shopRepo)
 
-        useCase.invoke(ShopType.Blacksmith)
+        val shopId = useCase(ShopType.Blacksmith)
 
-        val createdShop = shopRepo.createdShops.first()
-        assertEquals(ShopType.Blacksmith, createdShop.type)
+        val createdShop = shopRepo.getShopSnapshot(shopId)
+        assertEquals(ShopType.Blacksmith, createdShop?.type)
     }
 
     @Test
@@ -51,10 +48,10 @@ class GenerateShopUseCaseTest {
         val shopRepo = FakeShopRepository()
         val useCase = createUseCase(shopRepo)
 
-        useCase.invoke(null)
+        val shopId = useCase(null)
 
-        val createdShop = shopRepo.createdShops.first()
-        assertNotNull(createdShop.type)
+        val createdShop = shopRepo.getShopSnapshot(shopId)
+        assertNotNull(createdShop)
         assertTrue(ShopType.entries.contains(createdShop.type))
     }
 
@@ -63,26 +60,22 @@ class GenerateShopUseCaseTest {
         val shopRepo = FakeShopRepository()
         val useCase = createUseCase(shopRepo)
 
-        useCase.invoke(ShopType.Blacksmith)
+        val shopId = useCase(ShopType.Blacksmith)
 
-        val name = shopRepo.createdShops.first().name
+        val name = shopRepo.getShopSnapshot(shopId)?.name ?: ""
         assertTrue(name.isNotBlank(), "Name should not be blank")
         assertTrue(name.contains(" "), "Name should have prefix and suffix like 'The Golden Anvil'")
     }
 
     @Test
     fun generatedInventoryHas8To15Items() = runTest {
-        val shopRepo = FakeShopRepository()
-        val useCase = createUseCase(shopRepo)
-
         // Run multiple times with different seeds to test the range
         for (seed in 1..20) {
-            shopRepo.createdShops.clear()
-            shopRepo.lastInventory = null
+            val shopRepo = FakeShopRepository()
             val useCaseWithSeed = createUseCase(shopRepo, seed = seed)
-            useCaseWithSeed.invoke(ShopType.Blacksmith)
+            val shopId = useCaseWithSeed(ShopType.Blacksmith)
 
-            val inventorySize = shopRepo.lastInventory?.size ?: 0
+            val inventorySize = shopRepo.getInventorySnapshot(shopId).size
             assertTrue(
                 inventorySize in 8..15,
                 "Inventory size should be 8-15 but was $inventorySize (seed=$seed)"
@@ -95,9 +88,9 @@ class GenerateShopUseCaseTest {
         val shopRepo = FakeShopRepository()
         val useCase = createUseCase(shopRepo)
 
-        useCase.invoke(ShopType.Blacksmith)
+        val shopId = useCase(ShopType.Blacksmith)
 
-        val inventory = shopRepo.lastInventory ?: emptyList()
+        val inventory = shopRepo.getInventorySnapshot(shopId)
         val expectedCategories = ShopType.Blacksmith.defaultCategories
         inventory.forEach { invItem ->
             assertTrue(
@@ -112,9 +105,9 @@ class GenerateShopUseCaseTest {
         val shopRepo = FakeShopRepository()
         val useCase = createUseCase(shopRepo)
 
-        useCase.invoke(ShopType.Blacksmith)
+        val shopId = useCase(ShopType.Blacksmith)
 
-        val inventory = shopRepo.lastInventory ?: emptyList()
+        val inventory = shopRepo.getInventorySnapshot(shopId)
         inventory.forEach { invItem ->
             val baseCp = invItem.item.price.copperPieces
             val adjustedCp = invItem.adjustedPrice.copperPieces
@@ -128,19 +121,21 @@ class GenerateShopUseCaseTest {
     }
 
     @Test
-    fun quantityIsPositiveForAllItems() = runTest {
-        val shopRepo = FakeShopRepository()
-        val useCase = createUseCase(shopRepo)
+    fun quantityIsNullOrPositiveForAllItems() = runTest {
+        // Use many seeds to exercise both null (unlimited) and non-null quantities
+        for (seed in 1..20) {
+            val shopRepo = FakeShopRepository()
+            val useCase = createUseCase(shopRepo, seed = seed)
+            val shopId = useCase(ShopType.Blacksmith)
 
-        useCase.invoke(ShopType.Blacksmith)
-
-        val inventory = shopRepo.lastInventory ?: emptyList()
-        inventory.forEach { invItem ->
-            assertNotNull(invItem.quantity, "Quantity should not be null for generated items")
-            assertTrue(
-                invItem.quantity!! > 0,
-                "Quantity should be positive but was ${invItem.quantity} for '${invItem.item.name}'"
-            )
+            val inventory = shopRepo.getInventorySnapshot(shopId)
+            inventory.forEach { invItem ->
+                val qty = invItem.quantity
+                assertTrue(
+                    qty == null || qty > 0,
+                    "Quantity should be null (unlimited) or positive, but was $qty for '${invItem.item.name}'"
+                )
+            }
         }
     }
 
@@ -156,29 +151,11 @@ class GenerateShopUseCaseTest {
     }
 
     @Test
-    fun selectItemsByRarityReturnsRequestedCount() {
-        val useCase = createUseCase(FakeShopRepository())
-        val items = catalogItems.filter { it.category == ItemCategory.Weapon || it.category == ItemCategory.Armor }
-
-        val selected = useCase.selectItemsByRarity(items, 8)
-        assertEquals(8, selected.size, "Should select exactly 8 items")
-    }
-
-    @Test
-    fun selectItemsByRarityReturnsAllWhenFewerThanCount() {
-        val useCase = createUseCase(FakeShopRepository())
-        val items = catalogItems.take(3)
-
-        val selected = useCase.selectItemsByRarity(items, 10)
-        assertEquals(3, selected.size, "Should return all items when fewer than requested")
-    }
-
-    @Test
     fun returnsGeneratedShopId() = runTest {
         val shopRepo = FakeShopRepository()
         val useCase = createUseCase(shopRepo)
 
-        val id = useCase.invoke(ShopType.MagicShop)
+        val id = useCase(ShopType.MagicShop)
 
         assertEquals(1L, id, "Should return the ID from the repository")
     }
@@ -186,46 +163,17 @@ class GenerateShopUseCaseTest {
     // --- Helpers ---
 
     private fun createUseCase(
-        shopRepository: ShopRepository = FakeShopRepository(),
+        shopRepository: FakeShopRepository = FakeShopRepository(),
         seed: Int = 42,
     ): GenerateShopUseCase {
+        val itemRepo = FakeItemRepository(catalogItems)
+        val generateInventoryUseCase = GenerateInventoryUseCase(itemRepo)
         return GenerateShopUseCase(
             shopRepository = shopRepository,
-            itemRepository = FakeItemRepository(catalogItems),
+            generateInventoryUseCase = generateInventoryUseCase,
             random = Random(seed),
             clock = { 1000L },
         )
-    }
-}
-
-// --- Fakes ---
-
-private class FakeShopRepository : ShopRepository {
-    val createdShops = mutableListOf<Shop>()
-    var lastInventory: List<ShopInventoryItem>? = null
-    private var nextId = 1L
-
-    override fun getAllShops(): Flow<List<Shop>> = flowOf(createdShops.toList())
-    override fun getShopById(id: Long): Flow<Shop?> = flowOf(createdShops.find { it.id == id })
-
-    override suspend fun createShop(shop: Shop): Long {
-        val id = nextId++
-        createdShops.add(shop.copy(id = id))
-        return id
-    }
-
-    override suspend fun updateShop(shop: Shop) {}
-    override suspend fun deleteShop(id: Long) {
-        createdShops.removeAll { it.id == id }
-    }
-
-    override fun getInventory(shopId: Long): Flow<List<ShopInventoryItem>> = flowOf(emptyList())
-    override suspend fun addItemToShop(shopId: Long, item: Item, quantity: Int?, adjustedPrice: Price) {}
-    override suspend fun removeItemFromShop(shopId: Long, itemId: Long) {}
-    override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {}
-
-    override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {
-        lastInventory = items
     }
 }
 
