@@ -81,7 +81,7 @@ class GenerateShopViewModelTest {
     @Test
     fun `generate with specific type produces a shop with that type`() = runTest {
         val shopRepo = FakeShopRepository()
-        val viewModel = createViewModel(shopRepository = shopRepo)
+        val viewModel = createViewModel(useCase = createUseCase(shopRepository = shopRepo))
 
         viewModel.uiState.test {
             awaitItem() // initial state
@@ -104,7 +104,7 @@ class GenerateShopViewModelTest {
     @Test
     fun `generate with no selection generates a shop with random type`() = runTest {
         val shopRepo = FakeShopRepository()
-        val viewModel = createViewModel(shopRepository = shopRepo)
+        val viewModel = createViewModel(useCase = createUseCase(shopRepository = shopRepo))
 
         viewModel.uiState.test {
             awaitItem() // initial state
@@ -147,7 +147,7 @@ class GenerateShopViewModelTest {
     fun `generate sets error state on failure`() = runTest {
         val errorMessage = "Database error"
         val failingRepo = FailingShopRepository(RuntimeException(errorMessage))
-        val viewModel = createViewModel(shopRepository = failingRepo)
+        val viewModel = createViewModel(useCase = createUseCase(shopRepository = failingRepo))
 
         viewModel.uiState.test {
             awaitItem() // initial state
@@ -185,7 +185,7 @@ class GenerateShopViewModelTest {
     @Test
     fun `generated shop has a thematic name`() = runTest {
         val shopRepo = FakeShopRepository()
-        val viewModel = createViewModel(shopRepository = shopRepo)
+        val viewModel = createViewModel(useCase = createUseCase(shopRepository = shopRepo))
 
         viewModel.selectType(ShopType.Blacksmith)
 
@@ -221,19 +221,19 @@ class GenerateShopViewModelTest {
         Item(id = 12, name = "Rations", category = ItemCategory.Food, price = Price.ofSilver(5), rarity = Rarity.Common, isCustom = false),
     )
 
-    private fun createViewModel(
+    private fun createUseCase(
         shopRepository: ShopRepository = FakeShopRepository(),
-    ): GenerateShopViewModel {
-        val itemRepo = FakeItemRepository(catalogItems)
-        val generateInventoryUseCase = GenerateInventoryUseCase(itemRepo)
-        val useCase = GenerateShopUseCase(
-            shopRepository = shopRepository,
-            generateInventoryUseCase = generateInventoryUseCase,
-            random = Random(seed = 42),
-            clock = { 1000L },
-        )
-        return GenerateShopViewModel(useCase)
-    }
+        seed: Int = 42,
+    ): GenerateShopUseCase = GenerateShopUseCase(
+        shopRepository = shopRepository,
+        generateInventoryUseCase = GenerateInventoryUseCase(FakeItemRepository(catalogItems)),
+        random = Random(seed = seed),
+        clock = { 1000L },
+    )
+
+    private fun createViewModel(
+        useCase: GenerateShopUseCase = createUseCase(),
+    ): GenerateShopViewModel = GenerateShopViewModel(useCase)
 }
 
 /** In-memory fake [ShopRepository] for testing. */
