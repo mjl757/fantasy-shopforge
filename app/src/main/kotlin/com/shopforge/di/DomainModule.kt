@@ -10,8 +10,10 @@ import com.shopforge.domain.usecase.GenerateShopNameUseCase
 import com.shopforge.domain.usecase.GenerateShopUseCase
 import com.shopforge.domain.usecase.GetAllShopsUseCase
 import com.shopforge.domain.usecase.GetShopWithInventoryUseCase
+import com.shopforge.domain.usecase.IncrementQuantityUseCase
 import com.shopforge.domain.usecase.RegenerateInventoryUseCase
 import com.shopforge.domain.usecase.RemoveItemFromShopUseCase
+import com.shopforge.domain.usecase.UpdateItemAdjustedPriceUseCase
 import com.shopforge.domain.usecase.UpdateShopUseCase
 import org.koin.dsl.module
 
@@ -25,6 +27,8 @@ val domainModule = module {
     single { GetAllItemsUseCase(get()) }
     single { RemoveItemFromShopUseCase(get()) }
     single { DecrementQuantityUseCase(get()) }
+    single { IncrementQuantityUseCase(get()) }
+    single { UpdateItemAdjustedPriceUseCase(get()) }
     single { GenerateInventoryUseCase(get()) }
     single { GenerateShopNameUseCase() }
     single { GenerateShopUseCase(get(), get(), clock = System::currentTimeMillis) }

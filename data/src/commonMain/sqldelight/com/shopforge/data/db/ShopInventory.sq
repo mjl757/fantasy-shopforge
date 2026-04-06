@@ -24,6 +24,12 @@ UPDATE ShopInventory
 SET quantity = ?
 WHERE shopId = ? AND itemId = ?;
 
+-- Update the adjusted price of an item in a shop's inventory.
+updateAdjustedPrice:
+UPDATE ShopInventory
+SET adjustedPrice = ?
+WHERE shopId = ? AND itemId = ?;
+
 -- Delete all inventory entries for a given shop.
 deleteByShopId:
 DELETE FROM ShopInventory

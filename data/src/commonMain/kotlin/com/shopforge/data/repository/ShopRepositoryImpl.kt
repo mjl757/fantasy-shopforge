@@ -107,6 +107,14 @@ class ShopRepositoryImpl(
         )
     }
 
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        inventoryQueries.updateAdjustedPrice(
+            adjustedPrice = adjustedPrice.copperPieces,
+            shopId = shopId,
+            itemId = itemId,
+        )
+    }
+
     override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {
         database.transaction {
             inventoryQueries.deleteByShopId(shopId)

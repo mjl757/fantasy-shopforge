@@ -1,4 +1,4 @@
-package com.shopforge.ui.screen.editshop
+package com.shopforge.ui.editshop
 
 import com.shopforge.domain.model.Shop
 import com.shopforge.domain.model.ShopType
@@ -6,7 +6,9 @@ import com.shopforge.domain.usecase.DeleteShopUseCase
 import com.shopforge.domain.usecase.GenerateInventoryUseCase
 import com.shopforge.domain.usecase.RegenerateInventoryUseCase
 import com.shopforge.domain.usecase.UpdateShopUseCase
-import com.shopforge.ui.screen.createshop.FakeShopRepository
+import com.shopforge.ui.editshop.EditShopEvent
+import com.shopforge.ui.editshop.EditShopViewModel
+import com.shopforge.ui.createshop.FakeShopRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

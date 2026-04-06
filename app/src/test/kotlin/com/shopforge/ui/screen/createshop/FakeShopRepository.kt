@@ -1,4 +1,4 @@
-package com.shopforge.ui.screen.createshop
+package com.shopforge.ui.createshop
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.Price

@@ -14,10 +14,10 @@ import com.shopforge.ui.additem.AddItemToShopScreen
 import com.shopforge.ui.additem.AddItemToShopViewModel
 import com.shopforge.ui.generate.GenerateShopScreen
 import com.shopforge.ui.generate.GenerateShopViewModel
-import com.shopforge.ui.screen.createshop.CreateShopScreen
-import com.shopforge.ui.screen.createshop.CreateShopViewModel
-import com.shopforge.ui.screen.editshop.EditShopScreen
-import com.shopforge.ui.screen.editshop.EditShopViewModel
+import com.shopforge.ui.createshop.CreateShopScreen
+import com.shopforge.ui.createshop.CreateShopViewModel
+import com.shopforge.ui.editshop.EditShopScreen
+import com.shopforge.ui.editshop.EditShopViewModel
 import com.shopforge.ui.shopdetail.ShopDetailScreen
 import com.shopforge.ui.shopdetail.ShopDetailViewModel
 import com.shopforge.ui.shoplist.ShopListEvent

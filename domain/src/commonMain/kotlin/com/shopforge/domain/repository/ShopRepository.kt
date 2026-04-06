@@ -73,6 +73,11 @@ interface ShopRepository {
     suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?)
 
     /**
+     * Updates the adjusted price of [itemId] in the inventory of [shopId].
+     */
+    suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: com.shopforge.domain.model.Price)
+
+    /**
      * Replaces the entire inventory of [shopId] with [items].
      * Existing inventory entries are deleted before the new ones are inserted.
      */

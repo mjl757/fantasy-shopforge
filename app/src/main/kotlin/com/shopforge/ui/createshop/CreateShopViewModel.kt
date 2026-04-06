@@ -1,4 +1,4 @@
-package com.shopforge.ui.screen.createshop
+package com.shopforge.ui.createshop
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

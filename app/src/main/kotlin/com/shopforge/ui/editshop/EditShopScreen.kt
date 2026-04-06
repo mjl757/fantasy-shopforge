@@ -1,4 +1,4 @@
-package com.shopforge.ui.screen.editshop
+package com.shopforge.ui.editshop
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,7 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.shopforge.ui.screen.createshop.ShopTypeDropdown
+import com.shopforge.ui.createshop.ShopTypeDropdown
 
 /**
  * Edit Shop screen — pre-filled form for modifying an existing shop,

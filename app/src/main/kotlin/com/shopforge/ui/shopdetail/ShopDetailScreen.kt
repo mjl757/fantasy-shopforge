@@ -1,5 +1,11 @@
 package com.shopforge.ui.shopdetail
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,28 +20,39 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.shopforge.domain.model.Rarity
@@ -43,7 +60,8 @@ import com.shopforge.domain.model.ShopInventoryItem
 
 /**
  * Shop Detail screen displaying shop info and inventory.
- * Supports search filtering and tap-to-decrement for session reference.
+ * Supports search filtering, expandable item rows with detail,
+ * quantity controls, price editing, and item removal.
  */
 @Composable
 fun ShopDetailScreen(
@@ -135,6 +153,14 @@ private fun ShopDetailScreen(
                     state = state,
                     onSearchQueryChange = viewModel::searchInventory,
                     onDecrementQuantity = viewModel::decrementQuantity,
+                    onIncrementQuantity = viewModel::incrementQuantity,
+                    onToggleExpand = viewModel::toggleExpandItem,
+                    onEditPrice = viewModel::openEditSheet,
+                    onRequestDeleteItem = viewModel::requestDeleteItem,
+                    onDismissBottomSheet = viewModel::dismissBottomSheet,
+                    onDismissDeleteConfirmation = viewModel::dismissDeleteConfirmation,
+                    onConfirmDeleteItem = viewModel::confirmDeleteItem,
+                    onPriceInputChanged = viewModel::onPriceInputChanged,
                     contentPadding = padding,
                 )
             }
@@ -142,11 +168,20 @@ private fun ShopDetailScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShopDetailContent(
     state: ShopDetailUiState.Loaded,
     onSearchQueryChange: (String) -> Unit,
     onDecrementQuantity: (Long) -> Unit,
+    onIncrementQuantity: (Long) -> Unit,
+    onToggleExpand: (Long) -> Unit,
+    onEditPrice: (Long) -> Unit,
+    onRequestDeleteItem: (Long) -> Unit,
+    onDismissBottomSheet: () -> Unit,
+    onDismissDeleteConfirmation: () -> Unit,
+    onConfirmDeleteItem: () -> Unit,
+    onPriceInputChanged: (Long, String) -> Unit,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     LazyColumn(
@@ -208,10 +243,100 @@ private fun ShopDetailContent(
             ) { inventoryItem ->
                 InventoryItemRow(
                     inventoryItem = inventoryItem,
-                    onTapQuantity = { onDecrementQuantity(inventoryItem.item.id) },
+                    isExpanded = state.expandedItemId == inventoryItem.item.id,
+                    onToggleExpand = { onToggleExpand(inventoryItem.item.id) },
+                    onEditPrice = { onEditPrice(inventoryItem.item.id) },
+                    onRequestDelete = { onRequestDeleteItem(inventoryItem.item.id) },
+                    onDecrement = { onDecrementQuantity(inventoryItem.item.id) },
+                    onIncrement = { onIncrementQuantity(inventoryItem.item.id) },
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             }
+        }
+    }
+
+    // Edit item bottom sheet
+    if (state.editingItem != null) {
+        EditItemBottomSheet(
+            inventoryItem = state.editingItem,
+            priceEditError = state.priceEditError,
+            onDismiss = onDismissBottomSheet,
+            onPriceInputChanged = { rawInput ->
+                onPriceInputChanged(state.editingItem.item.id, rawInput)
+            },
+        )
+    }
+
+    // Delete confirmation dialog
+    val deleteItemName = state.inventory.find { it.item.id == state.expandedItemId }?.item?.name
+    if (state.showDeleteConfirmation && deleteItemName != null) {
+        AlertDialog(
+            onDismissRequest = onDismissDeleteConfirmation,
+            title = { Text("Remove Item") },
+            text = { Text("Remove $deleteItemName from this shop?") },
+            confirmButton = {
+                TextButton(
+                    onClick = onConfirmDeleteItem,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissDeleteConfirmation) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditItemBottomSheet(
+    inventoryItem: ShopInventoryItem,
+    priceEditError: String?,
+    onDismiss: () -> Unit,
+    onPriceInputChanged: (String) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val initialPrice = inventoryItem.adjustedPrice.toGoldDecimal().let { d ->
+        if (d % 1.0 == 0.0) d.toLong().toString() else d.toString()
+    }
+    var priceInput by rememberSaveable { mutableStateOf(initialPrice) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+        ) {
+            Text(
+                text = "Adjusted Price",
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = priceInput,
+                onValueChange = { newValue ->
+                    priceInput = newValue
+                    onPriceInputChanged(newValue)
+                },
+                label = { Text("Gold pieces (GP)") },
+                singleLine = true,
+                isError = priceEditError != null,
+                supportingText = if (priceEditError != null) {
+                    { Text(priceEditError) }
+                } else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -257,79 +382,168 @@ private fun ShopHeader(
 @Composable
 private fun InventoryItemRow(
     inventoryItem: ShopInventoryItem,
-    onTapQuantity: () -> Unit,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onEditPrice: () -> Unit,
+    onRequestDelete: () -> Unit,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit,
 ) {
     val isSoldOut = inventoryItem.isSoldOut
+    val isUnlimited = inventoryItem.isUnlimitedStock
     val alpha = if (isSoldOut) 0.5f else 1f
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .alpha(alpha),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Item info (left side)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = inventoryItem.item.name,
-                style = MaterialTheme.typography.bodyLarge,
-                textDecoration = if (isSoldOut) TextDecoration.LineThrough else TextDecoration.None,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleExpand)
+                .alpha(alpha),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Item info (left side)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 8.dp),
+            ) {
                 Text(
-                    text = inventoryItem.adjustedPrice.format(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = inventoryItem.item.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textDecoration = if (isSoldOut) TextDecoration.LineThrough else TextDecoration.None,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                RarityBadge(rarity = inventoryItem.item.rarity)
+                Spacer(modifier = Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = inventoryItem.adjustedPrice.format(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    RarityBadge(rarity = inventoryItem.item.rarity)
+                }
             }
+
+            // Quantity controls (right side)
+            QuantityControls(
+                quantity = inventoryItem.quantity,
+                isSoldOut = isSoldOut,
+                isUnlimited = isUnlimited,
+                onDecrement = onDecrement,
+                onIncrement = onIncrement,
+                modifier = Modifier.padding(end = 4.dp),
+            )
         }
 
-        // Quantity (right side, tappable)
-        QuantityDisplay(
-            quantity = inventoryItem.quantity,
-            isSoldOut = isSoldOut,
-            onClick = onTapQuantity,
-        )
+        // Expanded detail section
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(animationSpec = tween(250)) + fadeIn(),
+            exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+            ) {
+                inventoryItem.item.description?.let { desc ->
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = formatCategoryLabel(inventoryItem.item.category.name),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Text(
+                            text = "Edit Price",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .clickable(onClick = onEditPrice)
+                                .padding(4.dp),
+                        )
+                        Text(
+                            text = "Remove",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .clickable(onClick = onRequestDelete)
+                                .padding(4.dp),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
+/**
+ * Inserts spaces before uppercase letters in a PascalCase string.
+ * e.g. "AdventuringGear" → "Adventuring Gear"
+ */
+private fun formatCategoryLabel(name: String): String =
+    name.replace(Regex("(?<=.)([A-Z])"), " $1")
+
 @Composable
-private fun QuantityDisplay(
+private fun QuantityControls(
     quantity: Int?,
     isSoldOut: Boolean,
-    onClick: () -> Unit,
+    isUnlimited: Boolean,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val displayText = when {
-        quantity == null -> "\u221E" // infinity symbol
-        isSoldOut -> "0"
-        else -> quantity.toString()
+        isUnlimited -> "\u221E"
+        else -> quantity?.toString() ?: "0"
     }
 
-    Surface(
-        modifier = Modifier
-            .clickable(enabled = quantity != null && !isSoldOut, onClick = onClick),
-        color = when {
-            isSoldOut -> MaterialTheme.colorScheme.errorContainer
-            quantity == null -> MaterialTheme.colorScheme.tertiaryContainer
-            else -> MaterialTheme.colorScheme.primaryContainer
-        },
-        shape = MaterialTheme.shapes.small,
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
+        IconButton(
+            onClick = onDecrement,
+            enabled = !isUnlimited && !isSoldOut,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Remove,
+                contentDescription = "Decrease quantity",
+            )
+        }
         Text(
             text = displayText,
             style = MaterialTheme.typography.labelLarge,
             color = when {
-                isSoldOut -> MaterialTheme.colorScheme.onErrorContainer
-                quantity == null -> MaterialTheme.colorScheme.onTertiaryContainer
-                else -> MaterialTheme.colorScheme.onPrimaryContainer
+                isSoldOut -> MaterialTheme.colorScheme.error
+                isUnlimited -> MaterialTheme.colorScheme.tertiary
+                else -> MaterialTheme.colorScheme.onSurface
             },
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
         )
+        IconButton(
+            onClick = onIncrement,
+            enabled = !isUnlimited,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Increase quantity",
+            )
+        }
     }
 }
 

@@ -1,9 +1,10 @@
-package com.shopforge.ui.screen.createshop
+package com.shopforge.ui.createshop
 
-import com.shopforge.domain.model.Shop
 import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.usecase.CreateShopUseCase
 import com.shopforge.domain.usecase.GenerateShopNameUseCase
+import com.shopforge.ui.createshop.CreateShopEvent
+import com.shopforge.ui.createshop.CreateShopViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

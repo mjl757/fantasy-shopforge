@@ -1,4 +1,4 @@
-package com.shopforge.ui.screen.editshop
+package com.shopforge.ui.editshop
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +7,7 @@ import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.usecase.DeleteShopUseCase
 import com.shopforge.domain.usecase.RegenerateInventoryUseCase
 import com.shopforge.domain.usecase.UpdateShopUseCase
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -29,7 +30,7 @@ class EditShopViewModel(
     private val updateShopUseCase: UpdateShopUseCase,
     private val deleteShopUseCase: DeleteShopUseCase,
     private val regenerateInventoryUseCase: RegenerateInventoryUseCase,
-    private val getShopFlow: (Long) -> kotlinx.coroutines.flow.Flow<Shop?>,
+    private val getShopFlow: (Long) -> Flow<Shop?>,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditShopUiState())
