@@ -5,12 +5,10 @@ import com.shopforge.domain.repository.ShopRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Retrieves all shops as a reactive Flow for the shop list screen.
+ * Use case that returns a reactive stream of all saved shops.
  */
 class GetAllShopsUseCase(
     private val shopRepository: ShopRepository,
 ) {
-    operator fun invoke(): Flow<List<Shop>> {
-        return shopRepository.getAllShops()
-    }
+    operator fun invoke(): Flow<List<Shop>> = shopRepository.getAllShops()
 }

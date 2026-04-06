@@ -29,15 +29,15 @@ class AppRoutesTest {
 
     @Test
     fun `ShopDetail carries shopId`() {
-        val route = AppRoute.ShopDetail(shopId = "shop-123")
-        assertEquals("shop-123", route.shopId)
+        val route = AppRoute.ShopDetail(shopId = 123L)
+        assertEquals(123L, route.shopId)
     }
 
     @Test
     fun `ShopDetail equality is based on shopId`() {
-        val a = AppRoute.ShopDetail("abc")
-        val b = AppRoute.ShopDetail("abc")
-        val c = AppRoute.ShopDetail("xyz")
+        val a = AppRoute.ShopDetail(1L)
+        val b = AppRoute.ShopDetail(1L)
+        val c = AppRoute.ShopDetail(2L)
         assertEquals(a, b)
         assertNotEquals(a, c)
     }
@@ -57,15 +57,15 @@ class AppRoutesTest {
 
     @Test
     fun `EditShop carries shopId`() {
-        val route = AppRoute.EditShop(shopId = "edit-42")
-        assertEquals("edit-42", route.shopId)
+        val route = AppRoute.EditShop(shopId = 42L)
+        assertEquals(42L, route.shopId)
     }
 
     @Test
     fun `EditShop equality is based on shopId`() {
-        val a = AppRoute.EditShop("alpha")
-        val b = AppRoute.EditShop("alpha")
-        val c = AppRoute.EditShop("beta")
+        val a = AppRoute.EditShop(1L)
+        val b = AppRoute.EditShop(1L)
+        val c = AppRoute.EditShop(2L)
         assertEquals(a, b)
         assertNotEquals(a, c)
     }
@@ -106,9 +106,9 @@ class AppRoutesTest {
     fun `all route types implement AppRoute sealed interface`() {
         val routes: List<AppRoute> = listOf(
             AppRoute.ShopList,
-            AppRoute.ShopDetail("id"),
+            AppRoute.ShopDetail(0L),
             AppRoute.CreateShop,
-            AppRoute.EditShop("id"),
+            AppRoute.EditShop(0L),
             AppRoute.GenerateShop,
             AppRoute.AddItemToShop(0L),
         )
@@ -121,14 +121,14 @@ class AppRoutesTest {
 
     @Test
     fun `ShopDetail and EditShop with same shopId are not equal`() {
-        val detail: Any = AppRoute.ShopDetail("same-id")
-        val edit: Any = AppRoute.EditShop("same-id")
+        val detail: Any = AppRoute.ShopDetail(1L)
+        val edit: Any = AppRoute.EditShop(1L)
         assertNotEquals(detail, edit)
     }
 
     @Test
     fun `ShopDetail and AddItemToShop with same shopId are not equal`() {
-        val detail: Any = AppRoute.ShopDetail("same-id")
+        val detail: Any = AppRoute.ShopDetail(99L)
         val add: Any = AppRoute.AddItemToShop(99L)
         assertNotEquals(detail, add)
     }
