@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +21,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,7 +45,6 @@ import com.shopforge.domain.model.ShopInventoryItem
  * Shop Detail screen displaying shop info and inventory.
  * Supports search filtering and tap-to-decrement for session reference.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShopDetailScreen(
     viewModel: ShopDetailViewModel,
@@ -54,14 +53,25 @@ fun ShopDetailScreen(
     onAddItem: (Long) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    ShopDetailScreen(state, viewModel, onNavigateBack, onEditShop, onAddItem)
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShopDetailScreen(
+    state: ShopDetailUiState,
+    viewModel: ShopDetailViewModel,
+    onNavigateBack: () -> Unit = {},
+    onEditShop: (Long) -> Unit = {},
+    onAddItem: (Long) -> Unit = {},
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = when (val s = state) {
-                            is ShopDetailUiState.Loaded -> s.shop.name
+                        text = when (state) {
+                            is ShopDetailUiState.Loaded -> state.shop.name
                             else -> "Shop Detail"
                         }
                     )
@@ -77,6 +87,12 @@ fun ShopDetailScreen(
                 actions = {
                     val loadedState = state as? ShopDetailUiState.Loaded
                     if (loadedState != null) {
+                        IconButton(onClick = { onAddItem(loadedState.shop.id) }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add item",
+                            )
+                        }
                         IconButton(onClick = { onEditShop(loadedState.shop.id) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
@@ -87,19 +103,8 @@ fun ShopDetailScreen(
                 },
             )
         },
-        floatingActionButton = {
-            val loadedState = state as? ShopDetailUiState.Loaded
-            if (loadedState != null) {
-                FloatingActionButton(onClick = { onAddItem(loadedState.shop.id) }) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add item",
-                    )
-                }
-            }
-        },
     ) { padding ->
-        when (val s = state) {
+        when (state) {
             is ShopDetailUiState.Loading -> {
                 Box(
                     modifier = Modifier
@@ -127,10 +132,10 @@ fun ShopDetailScreen(
 
             is ShopDetailUiState.Loaded -> {
                 ShopDetailContent(
-                    state = s,
+                    state = state,
                     onSearchQueryChange = viewModel::searchInventory,
                     onDecrementQuantity = viewModel::decrementQuantity,
-                    modifier = Modifier.padding(padding),
+                    contentPadding = padding,
                 )
             }
         }
@@ -142,10 +147,11 @@ private fun ShopDetailContent(
     state: ShopDetailUiState.Loaded,
     onSearchQueryChange: (String) -> Unit,
     onDecrementQuantity: (Long) -> Unit,
-    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = contentPadding,
     ) {
         // Shop header
         item {

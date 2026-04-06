@@ -28,6 +28,10 @@ class ItemRepositoryImpl(
 
     private val itemQueries get() = database.itemQueries
 
+    init {
+        seedCatalogIfEmpty()
+    }
+
     // ---- Catalog queries ----
 
     override fun getAllItems(): Flow<List<Item>> =
@@ -93,7 +97,7 @@ class ItemRepositoryImpl(
      * Seeds the catalog with built-in items if the database is empty.
      * This operation is idempotent — if items already exist, nothing happens.
      */
-    fun seedCatalogIfEmpty() {
+    private fun seedCatalogIfEmpty() {
         database.transaction {
             val count = itemQueries.countAll().executeAsOne()
             if (count > 0L) return@transaction
