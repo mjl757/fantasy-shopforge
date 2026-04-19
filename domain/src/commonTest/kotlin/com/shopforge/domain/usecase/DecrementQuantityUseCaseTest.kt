@@ -25,6 +25,8 @@ class DecrementQuantityUseCaseTest {
         override suspend fun addItemToShop(shopId: Long, item: Item, quantity: Int?, adjustedPrice: Price) =
             throw NotImplementedError()
         override suspend fun removeItemFromShop(shopId: Long, itemId: Long) = throw NotImplementedError()
+        override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) =
+            throw NotImplementedError()
         override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {
             updateCalls.add(Triple(shopId, itemId, quantity))
         }

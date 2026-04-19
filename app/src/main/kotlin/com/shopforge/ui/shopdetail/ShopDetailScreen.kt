@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -160,7 +161,8 @@ private fun ShopDetailScreen(
                     onDismissBottomSheet = viewModel::dismissBottomSheet,
                     onDismissDeleteConfirmation = viewModel::dismissDeleteConfirmation,
                     onConfirmDeleteItem = viewModel::confirmDeleteItem,
-                    onPriceInputChanged = viewModel::onPriceInputChanged,
+                    onSavePrice = viewModel::savePrice,
+                    onClearPriceEditError = viewModel::clearPriceEditError,
                     contentPadding = padding,
                 )
             }
@@ -181,7 +183,8 @@ private fun ShopDetailContent(
     onDismissBottomSheet: () -> Unit,
     onDismissDeleteConfirmation: () -> Unit,
     onConfirmDeleteItem: () -> Unit,
-    onPriceInputChanged: (Long, String) -> Unit,
+    onSavePrice: (Long, String) -> Unit,
+    onClearPriceEditError: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     LazyColumn(
@@ -261,9 +264,10 @@ private fun ShopDetailContent(
             inventoryItem = state.editingItem,
             priceEditError = state.priceEditError,
             onDismiss = onDismissBottomSheet,
-            onPriceInputChanged = { rawInput ->
-                onPriceInputChanged(state.editingItem.item.id, rawInput)
+            onSave = { rawInput ->
+                onSavePrice(state.editingItem.item.id, rawInput)
             },
+            onClearError = onClearPriceEditError,
         )
     }
 
@@ -299,7 +303,8 @@ private fun EditItemBottomSheet(
     inventoryItem: ShopInventoryItem,
     priceEditError: String?,
     onDismiss: () -> Unit,
-    onPriceInputChanged: (String) -> Unit,
+    onSave: (String) -> Unit,
+    onClearError: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
     val initialPrice = inventoryItem.adjustedPrice.toGoldDecimal().let { d ->
@@ -324,9 +329,9 @@ private fun EditItemBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = priceInput,
-                onValueChange = { newValue ->
-                    priceInput = newValue
-                    onPriceInputChanged(newValue)
+                onValueChange = {
+                    priceInput = it
+                    if (priceEditError != null) onClearError()
                 },
                 label = { Text("Gold pieces (GP)") },
                 singleLine = true,
@@ -337,6 +342,13 @@ private fun EditItemBottomSheet(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { onSave(priceInput) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Save")
+            }
         }
     }
 }

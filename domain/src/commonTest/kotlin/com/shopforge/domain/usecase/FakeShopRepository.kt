@@ -87,6 +87,15 @@ class FakeShopRepository : ShopRepository {
         }
     }
 
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        inventories.update { current ->
+            val existing = current[shopId] ?: return@update current
+            current + (shopId to existing.map {
+                if (it.item.id == itemId) it.copy(adjustedPrice = adjustedPrice) else it
+            })
+        }
+    }
+
     override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {
         shops.value.also { current ->
             if (shopId !in current) throw NoSuchElementException("Shop $shopId not found")

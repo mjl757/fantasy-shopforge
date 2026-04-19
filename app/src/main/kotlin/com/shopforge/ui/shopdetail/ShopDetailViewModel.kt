@@ -11,15 +11,11 @@ import com.shopforge.domain.usecase.IncrementQuantityUseCase
 import com.shopforge.domain.usecase.RemoveItemFromShopUseCase
 import com.shopforge.domain.usecase.UpdateItemAdjustedPriceUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -29,90 +25,77 @@ import kotlinx.coroutines.launch
  */
 class ShopDetailViewModel(
     private val shopId: Long,
-    private val getShopWithInventory: GetShopWithInventoryUseCase,
+    getShopWithInventory: GetShopWithInventoryUseCase,
     private val decrementQuantity: DecrementQuantityUseCase,
     private val incrementQuantity: IncrementQuantityUseCase,
     private val removeItemFromShop: RemoveItemFromShopUseCase,
     private val updateItemAdjustedPrice: UpdateItemAdjustedPriceUseCase,
 ) : ViewModel() {
 
-    private val _searchQuery = MutableStateFlow("")
+    private val _uiState = MutableStateFlow<ShopDetailUiState>(ShopDetailUiState.Loading)
+    val uiState: StateFlow<ShopDetailUiState> = _uiState.asStateFlow()
 
     // Tracks the full unfiltered inventory so quantity operations work correctly
     // even when a search filter is active and hides the target item.
-    private val _allInventory = MutableStateFlow<List<ShopInventoryItem>>(emptyList())
-
-    private val _expandedItemId = MutableStateFlow<Long?>(null)
-    private val _editingItemId = MutableStateFlow<Long?>(null)
-    private val _showDeleteConfirmation = MutableStateFlow(false)
-    private val _priceEditError = MutableStateFlow<String?>(null)
-    private val _priceEditInput = MutableStateFlow<Pair<Long, String>?>(null)
-
-    private val _editState = combine(
-        _editingItemId,
-        _showDeleteConfirmation,
-        _priceEditError,
-    ) { editingId, showDelete, priceError -> Triple(editingId, showDelete, priceError) }
-
-    val uiState: StateFlow<ShopDetailUiState> = combine(
-        getShopWithInventory(shopId),
-        _searchQuery,
-        _expandedItemId,
-        _editState,
-    ) { shopWithInventory, query, expandedId, (editingId, showDeleteConfirmation, priceEditError) ->
-        if (shopWithInventory == null) {
-            _allInventory.value = emptyList()
-            ShopDetailUiState.NotFound
-        } else {
-            _allInventory.value = shopWithInventory.inventory
-            val filteredInventory = if (query.isBlank()) {
-                shopWithInventory.inventory
-            } else {
-                shopWithInventory.inventory.filter { inventoryItem ->
-                    inventoryItem.item.name.contains(query, ignoreCase = true)
-                }
-            }
-            ShopDetailUiState.Loaded(
-                shop = shopWithInventory.shop,
-                inventory = filteredInventory,
-                searchQuery = query,
-                expandedItemId = expandedId,
-                editingItem = shopWithInventory.inventory.find { it.item.id == editingId },
-                showDeleteConfirmation = showDeleteConfirmation,
-                priceEditError = priceEditError,
-            )
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = ShopDetailUiState.Loading,
-    )
+    private var allInventory: List<ShopInventoryItem> = emptyList()
 
     init {
-        @OptIn(kotlinx.coroutines.FlowPreview::class)
-        _priceEditInput
-            .debounce(500L)
-            .filterNotNull()
-            .distinctUntilChanged()
-            .onEach { (itemId, rawInput) ->
-                if (_editingItemId.value != itemId) return@onEach
-                val gp = rawInput.trim().toDoubleOrNull()
-                if (gp == null || gp < 0) {
-                    _priceEditError.value = "Please enter a valid non-negative number"
+        getShopWithInventory(shopId)
+            .onEach { shopWithInventory ->
+                if (shopWithInventory == null) {
+                    allInventory = emptyList()
+                    _uiState.value = ShopDetailUiState.NotFound
                 } else {
-                    _priceEditError.value = null
-                    updateItemAdjustedPrice(shopId, itemId, Price((gp * Price.CP_PER_GP).toLong()))
+                    allInventory = shopWithInventory.inventory
+                    _uiState.update { current ->
+                        val query = (current as? ShopDetailUiState.Loaded)?.searchQuery.orEmpty()
+                        val expandedId = (current as? ShopDetailUiState.Loaded)?.expandedItemId
+                        val editingId = (current as? ShopDetailUiState.Loaded)?.editingItem?.item?.id
+                        val showDelete = (current as? ShopDetailUiState.Loaded)?.showDeleteConfirmation ?: false
+                        val priceError = (current as? ShopDetailUiState.Loaded)?.priceEditError
+
+                        ShopDetailUiState.Loaded(
+                            shop = shopWithInventory.shop,
+                            inventory = filterInventory(shopWithInventory.inventory, query),
+                            searchQuery = query,
+                            expandedItemId = expandedId,
+                            editingItem = shopWithInventory.inventory.find { it.item.id == editingId },
+                            showDeleteConfirmation = showDelete,
+                            priceEditError = priceError,
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)
     }
 
+    fun savePrice(itemId: Long, rawInput: String) {
+        val gp = rawInput.trim().toDoubleOrNull()
+        if (gp == null || gp < 0) {
+            updateLoaded { it.copy(priceEditError = "Please enter a valid non-negative number") }
+            return
+        }
+        viewModelScope.launch {
+            updateItemAdjustedPrice(shopId, itemId, Price((gp * Price.CP_PER_GP).toLong()))
+            dismissBottomSheet()
+        }
+    }
+
+    fun clearPriceEditError() {
+        updateLoaded { it.copy(priceEditError = null) }
+    }
+
     fun searchInventory(query: String) {
-        _searchQuery.value = query
+        updateLoaded {
+            it.copy(
+                searchQuery = query,
+                inventory = filterInventory(allInventory, query),
+            )
+        }
     }
 
     fun decrementQuantity(itemId: Long) {
-        val inventoryItem = _allInventory.value.find { it.item.id == itemId } ?: return
+        val inventoryItem = allInventory.find { it.item.id == itemId } ?: return
         if (inventoryItem.isUnlimitedStock || inventoryItem.isSoldOut) return
         viewModelScope.launch {
             decrementQuantity(shopId, itemId, inventoryItem.quantity)
@@ -120,7 +103,7 @@ class ShopDetailViewModel(
     }
 
     fun incrementQuantity(itemId: Long) {
-        val inventoryItem = _allInventory.value.find { it.item.id == itemId } ?: return
+        val inventoryItem = allInventory.find { it.item.id == itemId } ?: return
         if (inventoryItem.isUnlimitedStock) return
         viewModelScope.launch {
             incrementQuantity(shopId, itemId, inventoryItem.quantity)
@@ -128,44 +111,59 @@ class ShopDetailViewModel(
     }
 
     fun toggleExpandItem(itemId: Long) {
-        _expandedItemId.value = if (_expandedItemId.value == itemId) null else itemId
+        updateLoaded { it.copy(expandedItemId = if (it.expandedItemId == itemId) null else itemId) }
     }
 
     fun openEditSheet(itemId: Long) {
-        _priceEditError.value = null
-        _priceEditInput.value = null
-        _editingItemId.value = itemId
-    }
-
-    fun dismissBottomSheet() {
-        _editingItemId.value = null
-        _showDeleteConfirmation.value = false
-        _priceEditError.value = null
-        _priceEditInput.value = null
-    }
-
-    fun requestDeleteItem(itemId: Long) {
-        _expandedItemId.value = itemId
-        _showDeleteConfirmation.value = true
-    }
-
-    fun dismissDeleteConfirmation() {
-        _showDeleteConfirmation.value = false
-    }
-
-    fun confirmDeleteItem() {
-        val itemId = _expandedItemId.value ?: return
-        viewModelScope.launch {
-            removeItemFromShop(shopId, itemId)
-            _expandedItemId.value = null
-            _showDeleteConfirmation.value = false
-            // Also close the bottom sheet if it was open for this item
-            if (_editingItemId.value == itemId) dismissBottomSheet()
+        updateLoaded {
+            it.copy(
+                editingItem = allInventory.find { inv -> inv.item.id == itemId },
+                priceEditError = null,
+            )
         }
     }
 
-    fun onPriceInputChanged(itemId: Long, rawInput: String) {
-        _priceEditInput.value = Pair(itemId, rawInput)
+    fun dismissBottomSheet() {
+        updateLoaded {
+            it.copy(
+                editingItem = null,
+                showDeleteConfirmation = false,
+                priceEditError = null,
+            )
+        }
+    }
+
+    fun requestDeleteItem(itemId: Long) {
+        updateLoaded { it.copy(expandedItemId = itemId, showDeleteConfirmation = true) }
+    }
+
+    fun dismissDeleteConfirmation() {
+        updateLoaded { it.copy(showDeleteConfirmation = false) }
+    }
+
+    fun confirmDeleteItem() {
+        val state = _uiState.value as? ShopDetailUiState.Loaded ?: return
+        val itemId = state.expandedItemId ?: return
+        viewModelScope.launch {
+            removeItemFromShop(shopId, itemId)
+            updateLoaded {
+                it.copy(
+                    expandedItemId = null,
+                    showDeleteConfirmation = false,
+                    editingItem = if (it.editingItem?.item?.id == itemId) null else it.editingItem,
+                    priceEditError = if (it.editingItem?.item?.id == itemId) null else it.priceEditError,
+                )
+            }
+        }
+    }
+
+    private inline fun updateLoaded(block: (ShopDetailUiState.Loaded) -> ShopDetailUiState.Loaded) {
+        _uiState.update { if (it is ShopDetailUiState.Loaded) block(it) else it }
+    }
+
+    private fun filterInventory(inventory: List<ShopInventoryItem>, query: String): List<ShopInventoryItem> {
+        if (query.isBlank()) return inventory
+        return inventory.filter { it.item.name.contains(query, ignoreCase = true) }
     }
 }
 
