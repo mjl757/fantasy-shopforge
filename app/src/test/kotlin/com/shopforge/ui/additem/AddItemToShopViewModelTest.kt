@@ -3,6 +3,7 @@ package com.shopforge.ui.additem
 import app.cash.turbine.test
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.Shop
@@ -38,10 +39,10 @@ class AddItemToShopViewModelTest {
     private val shopId = 1L
 
     private val sampleItems = listOf(
-        Item(id = 1L, name = "Longsword", category = ItemCategory.Weapon, price = Price.ofGold(15), rarity = Rarity.Common, isCustom = false),
-        Item(id = 2L, name = "Chain Mail", category = ItemCategory.Armor, price = Price.ofGold(75), rarity = Rarity.Common, isCustom = false),
-        Item(id = 3L, name = "Potion of Healing", category = ItemCategory.Potion, price = Price.ofGold(50), rarity = Rarity.Uncommon, isCustom = false),
-        Item(id = 4L, name = "Vorpal Sword", category = ItemCategory.Weapon, price = Price.ofGold(5000), rarity = Rarity.Legendary, isCustom = false),
+        Item(id = 1L, name = "Longsword", category = ItemCategory.Weapon, price = Price(15, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 2L, name = "Chain Mail", category = ItemCategory.Armor, price = Price(75, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 3L, name = "Potion of Healing", category = ItemCategory.Potion, price = Price(50, Denomination.Gold), rarity = Rarity.Uncommon, isCustom = false),
+        Item(id = 4L, name = "Vorpal Sword", category = ItemCategory.Weapon, price = Price(5000, Denomination.Gold), rarity = Rarity.Legendary, isCustom = false),
     )
 
     @BeforeEach
@@ -383,6 +384,9 @@ class AddItemToShopViewModelTest {
         }
 
         override suspend fun removeItemFromShop(shopId: Long, itemId: Long) {}
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        throw NotImplementedError()
+    }
         override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {}
         override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {
             inventoryFlow.value = items

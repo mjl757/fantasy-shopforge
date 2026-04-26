@@ -113,6 +113,7 @@ class SchemaTest {
             description = "A standard longsword",
             type = "Weapon",
             price = 1500L,
+            priceDenomination = "Gold",
             rarity = "Common",
             isCustom = 0L,
         )
@@ -132,9 +133,9 @@ class SchemaTest {
     @Test
     fun `select items by category`() {
         val db = createTestDatabase()
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
-        db.itemQueries.insert("Chain Mail", null, "Armor", 7500L, "Common", 0L)
-        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Chain Mail", null, "Armor", 7500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Gold", "Common", 0L)
 
         val weapons = db.itemQueries.selectByCategory("Weapon").executeAsList()
         assertEquals(2, weapons.size)
@@ -144,8 +145,8 @@ class SchemaTest {
     @Test
     fun `select items by rarity`() {
         val db = createTestDatabase()
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
-        db.itemQueries.insert("Flame Tongue", null, "Weapon", 500000L, "Rare", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Flame Tongue", null, "Weapon", 500000L, "Gold", "Rare", 0L)
 
         val rare = db.itemQueries.selectByRarity("Rare").executeAsList()
         assertEquals(1, rare.size)
@@ -155,9 +156,9 @@ class SchemaTest {
     @Test
     fun `search items by name`() {
         val db = createTestDatabase()
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
-        db.itemQueries.insert("Shortsword", null, "Weapon", 1000L, "Common", 0L)
-        db.itemQueries.insert("Chain Mail", null, "Armor", 7500L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Shortsword", null, "Weapon", 1000L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Chain Mail", null, "Armor", 7500L, "Gold", "Common", 0L)
 
         val results = db.itemQueries.searchByName("sword", "sword").executeAsList()
         assertEquals(2, results.size)
@@ -167,7 +168,7 @@ class SchemaTest {
     @Test
     fun `update item`() {
         val db = createTestDatabase()
-        db.itemQueries.insert("Longsword", "A standard longsword", "Weapon", 1500L, "Common", 1L)
+        db.itemQueries.insert("Longsword", "A standard longsword", "Weapon", 1500L, "Gold", "Common", 1L)
         val id = db.itemQueries.selectAll().executeAsList().first().id
 
         db.itemQueries.update(
@@ -175,6 +176,7 @@ class SchemaTest {
             description = "An upgraded blade",
             type = "Weapon",
             price = 5000L,
+            priceDenomination = "Gold",
             rarity = "Rare",
             id = id,
         )
@@ -190,8 +192,8 @@ class SchemaTest {
     @Test
     fun `delete item`() {
         val db = createTestDatabase()
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
-        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Gold", "Common", 0L)
 
         val items = db.itemQueries.selectAll().executeAsList()
         assertEquals(2, items.size)
@@ -216,14 +218,14 @@ class SchemaTest {
         db.shopQueries.insert("Test Shop", "Blacksmith", null, 1000L, 1000L)
         val shopId = db.shopQueries.selectAll().executeAsList().first().id
 
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
-        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Gold", "Common", 0L)
         val items = db.itemQueries.selectAll().executeAsList()
         val swordId = items.first { it.name == "Longsword" }.id
         val daggerId = items.first { it.name == "Dagger" }.id
 
-        db.shopInventoryQueries.insertItem(shopId, swordId, quantity = 5L, adjustedPrice = 1600L)
-        db.shopInventoryQueries.insertItem(shopId, daggerId, quantity = null, adjustedPrice = 200L)
+        db.shopInventoryQueries.insertItem(shopId, swordId, quantity = 5L, adjustedPrice = 1600L, adjustedPriceDenomination = "Gold")
+        db.shopInventoryQueries.insertItem(shopId, daggerId, quantity = null, adjustedPrice = 200L, adjustedPriceDenomination = "Gold")
 
         val inventory = db.shopInventoryQueries.selectByShopId(shopId).executeAsList()
         assertEquals(2, inventory.size)
@@ -242,10 +244,10 @@ class SchemaTest {
         db.shopQueries.insert("Test Shop", "Blacksmith", null, 1000L, 1000L)
         val shopId = db.shopQueries.selectAll().executeAsList().first().id
 
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
         val itemId = db.itemQueries.selectAll().executeAsList().first().id
 
-        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L)
+        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L, adjustedPriceDenomination = "Gold")
 
         db.shopInventoryQueries.updateQuantity(quantity = 3L, shopId = shopId, itemId = itemId)
 
@@ -260,10 +262,10 @@ class SchemaTest {
         db.shopQueries.insert("Test Shop", "Blacksmith", null, 1000L, 1000L)
         val shopId = db.shopQueries.selectAll().executeAsList().first().id
 
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
         val itemId = db.itemQueries.selectAll().executeAsList().first().id
 
-        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L)
+        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L, adjustedPriceDenomination = "Gold")
         assertEquals(1, db.shopInventoryQueries.selectByShopId(shopId).executeAsList().size)
 
         db.shopInventoryQueries.removeItem(shopId, itemId)
@@ -276,12 +278,12 @@ class SchemaTest {
         db.shopQueries.insert("Test Shop", "Blacksmith", null, 1000L, 1000L)
         val shopId = db.shopQueries.selectAll().executeAsList().first().id
 
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
-        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
+        db.itemQueries.insert("Dagger", null, "Weapon", 200L, "Gold", "Common", 0L)
         val items = db.itemQueries.selectAll().executeAsList()
 
         items.forEach { item ->
-            db.shopInventoryQueries.insertItem(shopId, item.id, quantity = 1L, adjustedPrice = item.price)
+            db.shopInventoryQueries.insertItem(shopId, item.id, quantity = 1L, adjustedPrice = item.price, adjustedPriceDenomination = "Gold")
         }
         assertEquals(2, db.shopInventoryQueries.selectByShopId(shopId).executeAsList().size)
 
@@ -295,10 +297,10 @@ class SchemaTest {
         db.shopQueries.insert("Test Shop", "Blacksmith", null, 1000L, 1000L)
         val shopId = db.shopQueries.selectAll().executeAsList().first().id
 
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
         val itemId = db.itemQueries.selectAll().executeAsList().first().id
 
-        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L)
+        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L, adjustedPriceDenomination = "Gold")
         assertEquals(1, db.shopInventoryQueries.selectByShopId(shopId).executeAsList().size)
 
         // Deleting the shop should cascade-delete its inventory entries.
@@ -312,11 +314,11 @@ class SchemaTest {
         db.shopQueries.insert("Test Shop", "Blacksmith", null, 1000L, 1000L)
         val shopId = db.shopQueries.selectAll().executeAsList().first().id
 
-        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Common", 0L)
+        db.itemQueries.insert("Longsword", null, "Weapon", 1500L, "Gold", "Common", 0L)
         val itemId = db.itemQueries.selectAll().executeAsList().first().id
 
-        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L)
-        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 10L, adjustedPrice = 1600L)
+        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 5L, adjustedPrice = 1500L, adjustedPriceDenomination = "Gold")
+        db.shopInventoryQueries.insertItem(shopId, itemId, quantity = 10L, adjustedPrice = 1600L, adjustedPriceDenomination = "Gold")
 
         val inventory = db.shopInventoryQueries.selectByShopId(shopId).executeAsList()
         assertEquals(1, inventory.size)

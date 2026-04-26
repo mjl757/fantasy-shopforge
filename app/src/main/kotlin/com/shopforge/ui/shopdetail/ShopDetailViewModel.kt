@@ -2,6 +2,7 @@ package com.shopforge.ui.shopdetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Shop
 import com.shopforge.domain.model.ShopInventoryItem
@@ -69,14 +70,15 @@ class ShopDetailViewModel(
             .launchIn(viewModelScope)
     }
 
-    fun savePrice(itemId: Long, rawInput: String) {
-        val gp = rawInput.trim().toDoubleOrNull()
-        if (gp == null || gp < 0) {
-            updateLoaded { it.copy(priceEditError = "Please enter a valid non-negative number") }
+    fun savePrice(itemId: Long, rawAmount: String, denominationName: String) {
+        val amount = rawAmount.trim().toIntOrNull()
+        if (amount == null || amount < 0) {
+            updateLoaded { it.copy(priceEditError = "Please enter a valid non-negative whole number") }
             return
         }
+        val denomination = Denomination.valueOf(denominationName)
         viewModelScope.launch {
-            updateItemAdjustedPrice(shopId, itemId, Price((gp * Price.CP_PER_GP).toLong()))
+            updateItemAdjustedPrice(shopId, itemId, Price(amount, denomination))
             dismissBottomSheet()
         }
     }

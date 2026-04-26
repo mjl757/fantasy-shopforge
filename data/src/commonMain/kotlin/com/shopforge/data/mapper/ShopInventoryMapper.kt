@@ -1,6 +1,7 @@
 package com.shopforge.data.mapper
 
 import com.shopforge.data.db.SelectByShopId
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Price
@@ -13,13 +14,13 @@ internal fun SelectByShopId.toDomain(): ShopInventoryItem {
         name = name,
         description = description,
         category = ItemCategory.valueOf(type),
-        price = Price(price),
+        price = Price(price.toInt(), Denomination.valueOf(priceDenomination)),
         rarity = Rarity.valueOf(rarity),
         isCustom = isCustom != 0L,
     )
     return ShopInventoryItem(
         item = item,
         quantity = quantity?.toInt(),
-        adjustedPrice = Price(adjustedPrice),
+        adjustedPrice = Price(adjustedPrice.toInt(), Denomination.valueOf(adjustedPriceDenomination)),
     )
 }

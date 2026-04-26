@@ -57,6 +57,9 @@ class FakeShopRepository(
     override suspend fun removeItemFromShop(shopId: Long, itemId: Long) {
         throw UnsupportedOperationException("Not needed for ShopListViewModel tests")
     }
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        throw NotImplementedError()
+    }
 
     override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {
         throw UnsupportedOperationException("Not needed for ShopListViewModel tests")

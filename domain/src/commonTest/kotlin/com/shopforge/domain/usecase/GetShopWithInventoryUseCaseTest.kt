@@ -2,6 +2,7 @@ package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.Shop
@@ -56,12 +57,12 @@ class GetShopWithInventoryUseCaseTest {
             id = 10L,
             name = "Longsword",
             category = ItemCategory.Weapon,
-            price = Price.ofGold(15),
+            price = Price(15, Denomination.Gold),
             rarity = Rarity.Common,
             isCustom = false,
         ),
         quantity = 5,
-        adjustedPrice = Price.ofGold(16),
+        adjustedPrice = Price(16, Denomination.Gold),
     )
 
     @Test

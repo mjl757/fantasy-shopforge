@@ -1,4 +1,4 @@
-package com.shopforge.ui.screen.editshop
+package com.shopforge.ui.editshop
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory

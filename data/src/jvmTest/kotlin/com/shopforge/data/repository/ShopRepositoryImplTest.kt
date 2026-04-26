@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.shopforge.data.db.ShopForgeDatabase
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.Shop
@@ -46,8 +47,8 @@ class ShopRepositoryImplTest {
         updatedAt = 1000L,
     )
 
-    private fun insertTestItem(db: ShopForgeDatabase, name: String = "Longsword", price: Long = 1500L): Long {
-        db.itemQueries.insert(name, "A blade", "Weapon", price, "Common", 0L)
+    private fun insertTestItem(db: ShopForgeDatabase, name: String = "Longsword", price: Long = 15L): Long {
+        db.itemQueries.insert(name, "A blade", "Weapon", price, "Gold", "Common", 0L)
         return db.itemQueries.selectAll().executeAsList().first { it.name == name }.id
     }
 
@@ -178,17 +179,17 @@ class ShopRepositoryImplTest {
 
         val item = Item(
             id = itemId, name = "Longsword", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(15),
+            category = ItemCategory.Weapon, price = Price(15, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
-        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price.ofGold(16))
+        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price(16, Denomination.Gold))
 
         repo.getInventory(shopId).test {
             val inventory = awaitItem()
             assertEquals(1, inventory.size)
             assertEquals("Longsword", inventory.first().item.name)
             assertEquals(5, inventory.first().quantity)
-            assertEquals(Price.ofGold(16), inventory.first().adjustedPrice)
+            assertEquals(Price(16, Denomination.Gold), inventory.first().adjustedPrice)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -203,10 +204,10 @@ class ShopRepositoryImplTest {
 
         val item = Item(
             id = itemId, name = "Longsword", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(15),
+            category = ItemCategory.Weapon, price = Price(15, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
-        repo.addItemToShop(shopId, item, quantity = null, adjustedPrice = Price.ofGold(15))
+        repo.addItemToShop(shopId, item, quantity = null, adjustedPrice = Price(15, Denomination.Gold))
 
         repo.getInventory(shopId).test {
             val inventory = awaitItem()
@@ -225,10 +226,10 @@ class ShopRepositoryImplTest {
 
         val item = Item(
             id = itemId, name = "Longsword", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(15),
+            category = ItemCategory.Weapon, price = Price(15, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
-        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price.ofGold(15))
+        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price(15, Denomination.Gold))
         repo.removeItemFromShop(shopId, itemId)
 
         repo.getInventory(shopId).test {
@@ -247,10 +248,10 @@ class ShopRepositoryImplTest {
 
         val item = Item(
             id = itemId, name = "Longsword", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(15),
+            category = ItemCategory.Weapon, price = Price(15, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
-        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price.ofGold(15))
+        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price(15, Denomination.Gold))
         repo.updateItemQuantity(shopId, itemId, quantity = 3)
 
         repo.getInventory(shopId).test {
@@ -267,22 +268,22 @@ class ShopRepositoryImplTest {
 
         val shopId = repo.createShop(testShop())
         val swordId = insertTestItem(db, "Longsword", 1500L)
-        val daggerId = insertTestItem(db, "Dagger", 200L)
+        val daggerId = insertTestItem(db, "Dagger", 2L)
 
         val sword = Item(
             id = swordId, name = "Longsword", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(15),
+            category = ItemCategory.Weapon, price = Price(15, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
-        repo.addItemToShop(shopId, sword, quantity = 5, adjustedPrice = Price.ofGold(15))
+        repo.addItemToShop(shopId, sword, quantity = 5, adjustedPrice = Price(15, Denomination.Gold))
 
         val dagger = Item(
             id = daggerId, name = "Dagger", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(2),
+            category = ItemCategory.Weapon, price = Price(2, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
         val newInventory = listOf(
-            ShopInventoryItem(item = dagger, quantity = 10, adjustedPrice = Price.ofGold(2)),
+            ShopInventoryItem(item = dagger, quantity = 10, adjustedPrice = Price(2, Denomination.Gold)),
         )
         repo.replaceInventory(shopId, newInventory)
 
@@ -305,10 +306,10 @@ class ShopRepositoryImplTest {
 
         val item = Item(
             id = itemId, name = "Longsword", description = "A blade",
-            category = ItemCategory.Weapon, price = Price.ofGold(15),
+            category = ItemCategory.Weapon, price = Price(15, Denomination.Gold),
             rarity = Rarity.Common, isCustom = false,
         )
-        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price.ofGold(15))
+        repo.addItemToShop(shopId, item, quantity = 5, adjustedPrice = Price(15, Denomination.Gold))
 
         // Verify inventory exists before delete.
         repo.getInventory(shopId).test {

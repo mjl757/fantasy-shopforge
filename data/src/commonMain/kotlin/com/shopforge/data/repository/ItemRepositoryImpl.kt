@@ -24,12 +24,13 @@ import kotlin.coroutines.CoroutineContext
 class ItemRepositoryImpl(
     private val database: ShopForgeDatabase,
     private val context: CoroutineContext = Dispatchers.Default,
+    seedOnInit: Boolean = true,
 ) : ItemRepository {
 
     private val itemQueries get() = database.itemQueries
 
     init {
-        seedCatalogIfEmpty()
+        if (seedOnInit) seedCatalogIfEmpty()
     }
 
     // ---- Catalog queries ----
@@ -68,7 +69,8 @@ class ItemRepositoryImpl(
             name = item.name,
             description = item.description,
             type = item.category.toDbString(),
-            price = item.price.copperPieces,
+            price = item.price.amount.toLong(),
+            priceDenomination = item.price.denomination.name,
             rarity = item.rarity.toDbString(),
             isCustom = true.toDbIsCustom(),
         )
@@ -81,7 +83,8 @@ class ItemRepositoryImpl(
             name = item.name,
             description = item.description,
             type = item.category.toDbString(),
-            price = item.price.copperPieces,
+            price = item.price.amount.toLong(),
+            priceDenomination = item.price.denomination.name,
             rarity = item.rarity.toDbString(),
             id = item.id,
         )
@@ -97,7 +100,7 @@ class ItemRepositoryImpl(
      * Seeds the catalog with built-in items if the database is empty.
      * This operation is idempotent — if items already exist, nothing happens.
      */
-    private fun seedCatalogIfEmpty() {
+    internal fun seedCatalogIfEmpty() {
         database.transaction {
             val count = itemQueries.countAll().executeAsOne()
             if (count > 0L) return@transaction
@@ -107,7 +110,8 @@ class ItemRepositoryImpl(
                     name = item.name,
                     description = item.description,
                     type = item.category.toDbString(),
-                    price = item.price.copperPieces,
+                    price = item.price.amount.toLong(),
+            priceDenomination = item.price.denomination.name,
                     rarity = item.rarity.toDbString(),
                     isCustom = false.toDbIsCustom(),
                 )

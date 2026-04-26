@@ -31,7 +31,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,6 +59,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopInventoryItem
 
@@ -183,7 +187,7 @@ private fun ShopDetailContent(
     onDismissBottomSheet: () -> Unit,
     onDismissDeleteConfirmation: () -> Unit,
     onConfirmDeleteItem: () -> Unit,
-    onSavePrice: (Long, String) -> Unit,
+    onSavePrice: (Long, String, String) -> Unit,
     onClearPriceEditError: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
@@ -264,8 +268,8 @@ private fun ShopDetailContent(
             inventoryItem = state.editingItem,
             priceEditError = state.priceEditError,
             onDismiss = onDismissBottomSheet,
-            onSave = { rawInput ->
-                onSavePrice(state.editingItem.item.id, rawInput)
+            onSave = { rawAmount, denominationName ->
+                onSavePrice(state.editingItem.item.id, rawAmount, denominationName)
             },
             onClearError = onClearPriceEditError,
         )
@@ -303,14 +307,17 @@ private fun EditItemBottomSheet(
     inventoryItem: ShopInventoryItem,
     priceEditError: String?,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit,
+    onSave: (String, String) -> Unit,
     onClearError: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
-    val initialPrice = inventoryItem.adjustedPrice.toGoldDecimal().let { d ->
-        if (d % 1.0 == 0.0) d.toLong().toString() else d.toString()
+    var priceInput by rememberSaveable {
+        mutableStateOf(inventoryItem.adjustedPrice.amount.toString())
     }
-    var priceInput by rememberSaveable { mutableStateOf(initialPrice) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    var selectedDenomination by rememberSaveable {
+        mutableStateOf(inventoryItem.adjustedPrice.denomination.name)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -327,24 +334,58 @@ private fun EditItemBottomSheet(
                 style = MaterialTheme.typography.labelLarge,
             )
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = priceInput,
-                onValueChange = {
-                    priceInput = it
-                    if (priceEditError != null) onClearError()
-                },
-                label = { Text("Gold pieces (GP)") },
-                singleLine = true,
-                isError = priceEditError != null,
-                supportingText = if (priceEditError != null) {
-                    { Text(priceEditError) }
-                } else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
-            )
+            ) {
+                OutlinedTextField(
+                    value = priceInput,
+                    onValueChange = {
+                        priceInput = it
+                        if (priceEditError != null) onClearError()
+                    },
+                    label = { Text("Amount") },
+                    singleLine = true,
+                    isError = priceEditError != null,
+                    supportingText = if (priceEditError != null) {
+                        { Text(priceEditError) }
+                    } else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                )
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    modifier = Modifier.width(120.dp),
+                ) {
+                    OutlinedTextField(
+                        value = Denomination.valueOf(selectedDenomination).abbreviation,
+                        onValueChange = {},
+                        readOnly = true,
+                        singleLine = true,
+                        label = { Text("Type") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                        modifier = Modifier.menuAnchor(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        Denomination.entries.forEach { denomination ->
+                            DropdownMenuItem(
+                                text = { Text(denomination.abbreviation) },
+                                onClick = {
+                                    selectedDenomination = denomination.name
+                                    expanded = false
+                                },
+                            )
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { onSave(priceInput) },
+                onClick = { onSave(priceInput, selectedDenomination) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Save")

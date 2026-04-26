@@ -39,13 +39,13 @@ SELECT COUNT(*) FROM Item WHERE isCustom = 0;
 
 -- Insert a new item. Returns the generated id via lastInsertRowId().
 insert:
-INSERT INTO Item(name, description, type, price, rarity, isCustom)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO Item(name, description, type, price, priceDenomination, rarity, isCustom)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- Update an existing item's mutable fields.
 update:
 UPDATE Item
-SET name = ?, description = ?, type = ?, price = ?, rarity = ?
+SET name = ?, description = ?, type = ?, price = ?, priceDenomination = ?, rarity = ?
 WHERE id = ? AND isCustom = 1;
 
 -- Delete an item by id.

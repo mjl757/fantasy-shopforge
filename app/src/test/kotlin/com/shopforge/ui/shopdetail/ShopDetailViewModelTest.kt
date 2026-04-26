@@ -3,6 +3,7 @@ package com.shopforge.ui.shopdetail
 import app.cash.turbine.test
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.Shop
@@ -11,6 +12,9 @@ import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.repository.ShopRepository
 import com.shopforge.domain.usecase.DecrementQuantityUseCase
 import com.shopforge.domain.usecase.GetShopWithInventoryUseCase
+import com.shopforge.domain.usecase.IncrementQuantityUseCase
+import com.shopforge.domain.usecase.RemoveItemFromShopUseCase
+import com.shopforge.domain.usecase.UpdateItemAdjustedPriceUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -50,7 +54,7 @@ class ShopDetailViewModelTest {
         name = "Longsword",
         description = "A versatile blade",
         category = ItemCategory.Weapon,
-        price = Price.ofGold(15),
+        price = Price(15, Denomination.Gold),
         rarity = Rarity.Common,
         isCustom = false,
     )
@@ -60,7 +64,7 @@ class ShopDetailViewModelTest {
         name = "Potion of Healing",
         description = "Restores health",
         category = ItemCategory.Potion,
-        price = Price.ofGold(50),
+        price = Price(50, Denomination.Gold),
         rarity = Rarity.Common,
         isCustom = false,
     )
@@ -70,15 +74,15 @@ class ShopDetailViewModelTest {
         name = "Flame Tongue",
         description = "A fiery blade",
         category = ItemCategory.Weapon,
-        price = Price.ofGold(5000),
+        price = Price(5000, Denomination.Gold),
         rarity = Rarity.Rare,
         isCustom = false,
     )
 
     private val testInventory = listOf(
-        ShopInventoryItem(item = longsword, quantity = 3, adjustedPrice = Price.ofGold(16)),
-        ShopInventoryItem(item = healingPotion, quantity = null, adjustedPrice = Price.ofGold(50)),
-        ShopInventoryItem(item = flameTongue, quantity = 0, adjustedPrice = Price.ofGold(5200)),
+        ShopInventoryItem(item = longsword, quantity = 3, adjustedPrice = Price(16, Denomination.Gold)),
+        ShopInventoryItem(item = healingPotion, quantity = null, adjustedPrice = Price(50, Denomination.Gold)),
+        ShopInventoryItem(item = flameTongue, quantity = 0, adjustedPrice = Price(5200, Denomination.Gold)),
     )
 
     @BeforeEach
@@ -90,11 +94,17 @@ class ShopDetailViewModelTest {
 
         val getShopWithInventory = GetShopWithInventoryUseCase(fakeRepository)
         val decrementQuantity = DecrementQuantityUseCase(fakeRepository)
+        val incrementQuantity = IncrementQuantityUseCase(fakeRepository)
+        val removeItemFromShop = RemoveItemFromShopUseCase(fakeRepository)
+        val updateItemAdjustedPrice = UpdateItemAdjustedPriceUseCase(fakeRepository)
 
         viewModel = ShopDetailViewModel(
             shopId = 1L,
             getShopWithInventory = getShopWithInventory,
             decrementQuantity = decrementQuantity,
+            incrementQuantity = incrementQuantity,
+            removeItemFromShop = removeItemFromShop,
+            updateItemAdjustedPrice = updateItemAdjustedPrice,
         )
     }
 
@@ -259,6 +269,8 @@ private class FakeShopRepository(
     ) = throw NotImplementedError()
 
     override suspend fun removeItemFromShop(shopId: Long, itemId: Long) = throw NotImplementedError()
+
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) = throw NotImplementedError()
 
     override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {
         updateQuantityCalls.add(UpdateQuantityCall(shopId, itemId, quantity))

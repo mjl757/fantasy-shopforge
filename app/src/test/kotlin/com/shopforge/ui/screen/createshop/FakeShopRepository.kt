@@ -73,6 +73,10 @@ class FakeShopRepository : ShopRepository {
         inventory[shopId]?.removeAll { it.item.id == itemId }
     }
 
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        throw NotImplementedError()
+    }
+
     override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {
         inventory[shopId]?.replaceAll { invItem ->
             if (invItem.item.id == itemId) invItem.copy(quantity = quantity) else invItem

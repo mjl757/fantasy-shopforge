@@ -6,7 +6,7 @@ import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopInventoryItem
 import com.shopforge.domain.model.ShopType
 import com.shopforge.domain.repository.ItemRepository
-import kotlin.math.roundToLong
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 /**
@@ -78,10 +78,10 @@ class GenerateInventoryUseCase(
     }
 
     private fun applyPriceVariance(basePrice: Price): Price {
-        if (basePrice.copperPieces == 0L) return basePrice
+        if (basePrice.amount == 0) return basePrice
         val variance = 1.0 + (random.nextDouble() * 0.2 - 0.1) // -10% to +10%
-        val adjusted = (basePrice.copperPieces * variance).roundToLong().coerceAtLeast(1L)
-        return Price(adjusted)
+        val adjusted = (basePrice.amount * variance).roundToInt().coerceAtLeast(1)
+        return Price(adjusted, basePrice.denomination)
     }
 
     companion object {

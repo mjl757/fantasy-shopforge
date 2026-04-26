@@ -2,6 +2,7 @@ package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopInventoryItem
@@ -17,7 +18,7 @@ object TestFixtures {
         id: Long = 1L,
         name: String = "Longsword",
         category: ItemCategory = ItemCategory.Weapon,
-        price: Price = Price.ofGold(15),
+        price: Price = Price(15, Denomination.Gold),
         rarity: Rarity = Rarity.Common,
         isCustom: Boolean = false,
     ) = Item(

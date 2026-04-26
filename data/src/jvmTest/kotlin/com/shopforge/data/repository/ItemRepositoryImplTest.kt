@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.shopforge.data.db.ShopForgeDatabase
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import kotlinx.coroutines.Dispatchers
@@ -28,12 +29,12 @@ class ItemRepositoryImplTest {
     }
 
     private fun createRepository(db: ShopForgeDatabase) =
-        ItemRepositoryImpl(db, Dispatchers.Unconfined)
+        ItemRepositoryImpl(db, Dispatchers.Unconfined, seedOnInit = false)
 
     private fun customItem(
         name: String = "Custom Blade",
         category: ItemCategory = ItemCategory.Weapon,
-        price: Price = Price.ofGold(100),
+        price: Price = Price(100, Denomination.Gold),
         rarity: Rarity = Rarity.Rare,
     ) = Item(
         id = 0,

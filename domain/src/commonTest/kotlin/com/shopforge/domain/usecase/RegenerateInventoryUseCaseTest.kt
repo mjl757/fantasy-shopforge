@@ -2,6 +2,7 @@ package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopType
@@ -46,7 +47,7 @@ class RegenerateInventoryUseCaseTest {
         name = name,
         description = null,
         category = category,
-        price = Price.ofGold(10),
+        price = Price(10, Denomination.Gold),
         rarity = Rarity.Common,
         isCustom = false,
     )

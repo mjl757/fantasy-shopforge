@@ -10,8 +10,8 @@ ORDER BY Item.name ASC;
 
 -- Insert a new inventory entry for a shop.
 insertItem:
-INSERT OR REPLACE INTO ShopInventory(shopId, itemId, quantity, adjustedPrice)
-VALUES (?, ?, ?, ?);
+INSERT OR REPLACE INTO ShopInventory(shopId, itemId, quantity, adjustedPrice, adjustedPriceDenomination)
+VALUES (?, ?, ?, ?, ?);
 
 -- Remove a specific item from a shop's inventory.
 removeItem:
@@ -27,7 +27,7 @@ WHERE shopId = ? AND itemId = ?;
 -- Update the adjusted price of an item in a shop's inventory.
 updateAdjustedPrice:
 UPDATE ShopInventory
-SET adjustedPrice = ?
+SET adjustedPrice = ?, adjustedPriceDenomination = ?
 WHERE shopId = ? AND itemId = ?;
 
 -- Delete all inventory entries for a given shop.

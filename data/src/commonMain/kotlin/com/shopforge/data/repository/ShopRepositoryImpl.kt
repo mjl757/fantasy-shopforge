@@ -91,7 +91,8 @@ class ShopRepositoryImpl(
             shopId = shopId,
             itemId = item.id,
             quantity = quantity?.toLong(),
-            adjustedPrice = adjustedPrice.copperPieces,
+            adjustedPrice = adjustedPrice.amount.toLong(),
+            adjustedPriceDenomination = adjustedPrice.denomination.name,
         )
     }
 
@@ -109,7 +110,8 @@ class ShopRepositoryImpl(
 
     override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
         inventoryQueries.updateAdjustedPrice(
-            adjustedPrice = adjustedPrice.copperPieces,
+            adjustedPrice = adjustedPrice.amount.toLong(),
+            adjustedPriceDenomination = adjustedPrice.denomination.name,
             shopId = shopId,
             itemId = itemId,
         )
@@ -123,7 +125,8 @@ class ShopRepositoryImpl(
                     shopId = shopId,
                     itemId = inventoryItem.item.id,
                     quantity = inventoryItem.quantity?.toLong(),
-                    adjustedPrice = inventoryItem.adjustedPrice.copperPieces,
+                    adjustedPrice = inventoryItem.adjustedPrice.amount.toLong(),
+                    adjustedPriceDenomination = inventoryItem.adjustedPrice.denomination.name,
                 )
             }
         }

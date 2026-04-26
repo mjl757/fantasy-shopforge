@@ -2,6 +2,7 @@ package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopType
@@ -18,18 +19,18 @@ import kotlin.test.assertTrue
 class GenerateShopUseCaseTest {
 
     private val catalogItems = listOf(
-        Item(id = 1, name = "Longsword", category = ItemCategory.Weapon, price = Price.ofGold(15), rarity = Rarity.Common, isCustom = false),
-        Item(id = 2, name = "Shortsword", category = ItemCategory.Weapon, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
-        Item(id = 3, name = "Dagger", category = ItemCategory.Weapon, price = Price.ofGold(2), rarity = Rarity.Common, isCustom = false),
-        Item(id = 4, name = "Battleaxe", category = ItemCategory.Weapon, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
-        Item(id = 5, name = "Warhammer", category = ItemCategory.Weapon, price = Price.ofGold(15), rarity = Rarity.Common, isCustom = false),
-        Item(id = 6, name = "Chain Mail", category = ItemCategory.Armor, price = Price.ofGold(75), rarity = Rarity.Common, isCustom = false),
-        Item(id = 7, name = "Leather Armor", category = ItemCategory.Armor, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
-        Item(id = 8, name = "Plate Armor", category = ItemCategory.Armor, price = Price.ofGold(1500), rarity = Rarity.Uncommon, isCustom = false),
-        Item(id = 9, name = "Wooden Shield", category = ItemCategory.Armor, price = Price.ofGold(5), rarity = Rarity.Common, isCustom = false),
-        Item(id = 10, name = "Potion of Healing", category = ItemCategory.Potion, price = Price.ofGold(50), rarity = Rarity.Common, isCustom = false),
-        Item(id = 11, name = "Wand of Sparks", category = ItemCategory.MagicItem, price = Price.ofGold(500), rarity = Rarity.Uncommon, isCustom = false),
-        Item(id = 12, name = "Cloak of Shadows", category = ItemCategory.MagicItem, price = Price.ofGold(5000), rarity = Rarity.Rare, isCustom = false),
+        Item(id = 1, name = "Longsword", category = ItemCategory.Weapon, price = Price(15, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 2, name = "Shortsword", category = ItemCategory.Weapon, price = Price(10, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 3, name = "Dagger", category = ItemCategory.Weapon, price = Price(2, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 4, name = "Battleaxe", category = ItemCategory.Weapon, price = Price(10, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 5, name = "Warhammer", category = ItemCategory.Weapon, price = Price(15, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 6, name = "Chain Mail", category = ItemCategory.Armor, price = Price(75, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 7, name = "Leather Armor", category = ItemCategory.Armor, price = Price(10, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 8, name = "Plate Armor", category = ItemCategory.Armor, price = Price(1500, Denomination.Gold), rarity = Rarity.Uncommon, isCustom = false),
+        Item(id = 9, name = "Wooden Shield", category = ItemCategory.Armor, price = Price(5, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 10, name = "Potion of Healing", category = ItemCategory.Potion, price = Price(50, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 11, name = "Wand of Sparks", category = ItemCategory.MagicItem, price = Price(500, Denomination.Gold), rarity = Rarity.Uncommon, isCustom = false),
+        Item(id = 12, name = "Cloak of Shadows", category = ItemCategory.MagicItem, price = Price(5000, Denomination.Gold), rarity = Rarity.Rare, isCustom = false),
     )
 
     @Test
@@ -109,13 +110,18 @@ class GenerateShopUseCaseTest {
 
         val inventory = shopRepo.getInventorySnapshot(shopId)
         inventory.forEach { invItem ->
-            val baseCp = invItem.item.price.copperPieces
-            val adjustedCp = invItem.adjustedPrice.copperPieces
-            val lowerBound = (baseCp * 0.89).toLong() // slight tolerance for rounding
-            val upperBound = (baseCp * 1.11).toLong()
+            assertEquals(
+                invItem.item.price.denomination,
+                invItem.adjustedPrice.denomination,
+                "Denomination should not change for '${invItem.item.name}'"
+            )
+            val baseAmount = invItem.item.price.amount
+            val adjustedAmount = invItem.adjustedPrice.amount
+            val lowerBound = (baseAmount * 0.89).toInt() // slight tolerance for rounding
+            val upperBound = (baseAmount * 1.11).toInt()
             assertTrue(
-                adjustedCp in lowerBound..upperBound,
-                "Adjusted price $adjustedCp should be within +-10% of base $baseCp for '${invItem.item.name}'"
+                adjustedAmount in lowerBound..upperBound,
+                "Adjusted price $adjustedAmount should be within +-10% of base $baseAmount for '${invItem.item.name}'"
             )
         }
     }

@@ -31,7 +31,8 @@ object CatalogSeeder {
                     name = item.name,
                     description = item.description,
                     type = item.category.name,
-                    price = item.priceCopper,
+                    price = item.priceAmount.toLong(),
+                    priceDenomination = item.priceDenomination.name,
                     rarity = item.rarity.name,
                     isCustom = 0L,
                 )

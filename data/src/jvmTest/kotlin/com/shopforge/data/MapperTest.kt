@@ -5,6 +5,7 @@ import com.shopforge.data.mapper.toDomain
 import com.shopforge.data.mapper.toDbString
 import com.shopforge.data.mapper.toDbIsCustom
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopType
@@ -76,7 +77,8 @@ class MapperTest {
             name = "Longsword",
             description = "A standard longsword",
             type = "Weapon",
-            price = 1500L,
+            price = 15L,
+            priceDenomination = "Gold",
             rarity = "Common",
             isCustom = 0L,
         )
@@ -87,7 +89,7 @@ class MapperTest {
         assertEquals("Longsword", item.name)
         assertEquals("A standard longsword", item.description)
         assertEquals(ItemCategory.Weapon, item.category)
-        assertEquals(Price(1500L), item.price)
+        assertEquals(Price(15, Denomination.Gold), item.price)
         assertEquals(Rarity.Common, item.rarity)
         assertFalse(item.isCustom)
     }
@@ -100,6 +102,7 @@ class MapperTest {
             description = null,
             type = "Weapon",
             price = 5000L,
+            priceDenomination = "Gold",
             rarity = "Rare",
             isCustom = 1L,
         )
@@ -137,12 +140,14 @@ class MapperTest {
             shopId = 1L,
             itemId = 42L,
             quantity = 5L,
-            adjustedPrice = 1600L,
+            adjustedPrice = 16L,
+            adjustedPriceDenomination = "Gold",
             id = 42L,
             name = "Longsword",
             description = "A fine blade",
             type = "Weapon",
-            price = 1500L,
+            price = 15L,
+            priceDenomination = "Gold",
             rarity = "Common",
             isCustom = 0L,
         )
@@ -152,11 +157,11 @@ class MapperTest {
         assertEquals(42L, inventoryItem.item.id)
         assertEquals("Longsword", inventoryItem.item.name)
         assertEquals(ItemCategory.Weapon, inventoryItem.item.category)
-        assertEquals(Price(1500L), inventoryItem.item.price)
+        assertEquals(Price(15, Denomination.Gold), inventoryItem.item.price)
         assertEquals(Rarity.Common, inventoryItem.item.rarity)
         assertFalse(inventoryItem.item.isCustom)
         assertEquals(5, inventoryItem.quantity)
-        assertEquals(Price(1600L), inventoryItem.adjustedPrice)
+        assertEquals(Price(16, Denomination.Gold), inventoryItem.adjustedPrice)
     }
 
     @Test
@@ -165,12 +170,14 @@ class MapperTest {
             shopId = 1L,
             itemId = 42L,
             quantity = null,
-            adjustedPrice = 1500L,
+            adjustedPrice = 15L,
+            adjustedPriceDenomination = "Gold",
             id = 42L,
             name = "Rations",
             description = null,
             type = "Food",
-            price = 1500L,
+            price = 15L,
+            priceDenomination = "Gold",
             rarity = "Common",
             isCustom = 0L,
         )
@@ -187,12 +194,14 @@ class MapperTest {
             shopId = 1L,
             itemId = 42L,
             quantity = 0L,
-            adjustedPrice = 1500L,
+            adjustedPrice = 15L,
+            adjustedPriceDenomination = "Gold",
             id = 42L,
             name = "Rare Gem",
             description = null,
             type = "ExoticItem",
-            price = 1500L,
+            price = 15L,
+            priceDenomination = "Gold",
             rarity = "Rare",
             isCustom = 0L,
         )

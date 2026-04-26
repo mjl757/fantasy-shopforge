@@ -10,7 +10,7 @@ class ShopInventoryItemTest {
         id = 1L,
         name = "Longsword",
         category = ItemCategory.Weapon,
-        price = Price.ofGold(15),
+        price = Price(15, Denomination.Gold),
         rarity = Rarity.Common,
         isCustom = false,
     )

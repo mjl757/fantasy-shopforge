@@ -1,5 +1,6 @@
 package com.shopforge.data.catalog
 
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Rarity
 
@@ -10,13 +11,15 @@ import com.shopforge.domain.model.Rarity
  * @param name Display name of the item.
  * @param description Flavor text describing the item.
  * @param category The item's category.
- * @param priceCopper Base price in copper pieces.
+ * @param priceAmount Base price amount.
+ * @param priceDenomination Denomination for the price.
  * @param rarity How rare the item is.
  */
 data class CatalogItem(
     val name: String,
     val description: String,
     val category: ItemCategory,
-    val priceCopper: Long,
+    val priceAmount: Int,
+    val priceDenomination: Denomination,
     val rarity: Rarity,
 )

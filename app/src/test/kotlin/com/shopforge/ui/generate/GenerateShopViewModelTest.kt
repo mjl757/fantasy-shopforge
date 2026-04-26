@@ -3,6 +3,7 @@ package com.shopforge.ui.generate
 import app.cash.turbine.test
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.Shop
@@ -207,18 +208,18 @@ class GenerateShopViewModelTest {
     // --- Helpers ---
 
     private val catalogItems = listOf(
-        Item(id = 1, name = "Longsword", category = ItemCategory.Weapon, price = Price.ofGold(15), rarity = Rarity.Common, isCustom = false),
-        Item(id = 2, name = "Shortsword", category = ItemCategory.Weapon, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
-        Item(id = 3, name = "Chain Mail", category = ItemCategory.Armor, price = Price.ofGold(75), rarity = Rarity.Common, isCustom = false),
-        Item(id = 4, name = "Leather Armor", category = ItemCategory.Armor, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
-        Item(id = 5, name = "Plate Armor", category = ItemCategory.Armor, price = Price.ofGold(1500), rarity = Rarity.Uncommon, isCustom = false),
-        Item(id = 6, name = "Dagger", category = ItemCategory.Weapon, price = Price.ofGold(2), rarity = Rarity.Common, isCustom = false),
-        Item(id = 7, name = "Battleaxe", category = ItemCategory.Weapon, price = Price.ofGold(10), rarity = Rarity.Common, isCustom = false),
-        Item(id = 8, name = "Warhammer", category = ItemCategory.Weapon, price = Price.ofGold(15), rarity = Rarity.Common, isCustom = false),
-        Item(id = 9, name = "Wooden Shield", category = ItemCategory.Armor, price = Price.ofGold(5), rarity = Rarity.Common, isCustom = false),
-        Item(id = 10, name = "Potion of Healing", category = ItemCategory.Potion, price = Price.ofGold(50), rarity = Rarity.Common, isCustom = false),
-        Item(id = 11, name = "Wand of Sparks", category = ItemCategory.MagicItem, price = Price.ofGold(500), rarity = Rarity.Uncommon, isCustom = false),
-        Item(id = 12, name = "Rations", category = ItemCategory.Food, price = Price.ofSilver(5), rarity = Rarity.Common, isCustom = false),
+        Item(id = 1, name = "Longsword", category = ItemCategory.Weapon, price = Price(15, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 2, name = "Shortsword", category = ItemCategory.Weapon, price = Price(10, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 3, name = "Chain Mail", category = ItemCategory.Armor, price = Price(75, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 4, name = "Leather Armor", category = ItemCategory.Armor, price = Price(10, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 5, name = "Plate Armor", category = ItemCategory.Armor, price = Price(1500, Denomination.Gold), rarity = Rarity.Uncommon, isCustom = false),
+        Item(id = 6, name = "Dagger", category = ItemCategory.Weapon, price = Price(2, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 7, name = "Battleaxe", category = ItemCategory.Weapon, price = Price(10, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 8, name = "Warhammer", category = ItemCategory.Weapon, price = Price(15, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 9, name = "Wooden Shield", category = ItemCategory.Armor, price = Price(5, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 10, name = "Potion of Healing", category = ItemCategory.Potion, price = Price(50, Denomination.Gold), rarity = Rarity.Common, isCustom = false),
+        Item(id = 11, name = "Wand of Sparks", category = ItemCategory.MagicItem, price = Price(500, Denomination.Gold), rarity = Rarity.Uncommon, isCustom = false),
+        Item(id = 12, name = "Rations", category = ItemCategory.Food, price = Price(5, Denomination.Silver), rarity = Rarity.Common, isCustom = false),
     )
 
     private fun createUseCase(
@@ -269,6 +270,9 @@ private class FakeShopRepository : ShopRepository {
     ) {}
 
     override suspend fun removeItemFromShop(shopId: Long, itemId: Long) {}
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        throw NotImplementedError()
+    }
     override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {}
     override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {}
 }
@@ -283,6 +287,9 @@ private class FailingShopRepository(private val error: Throwable) : ShopReposito
     override fun getInventory(shopId: Long): Flow<List<ShopInventoryItem>> = flowOf(emptyList())
     override suspend fun addItemToShop(shopId: Long, item: Item, quantity: Int?, adjustedPrice: Price) {}
     override suspend fun removeItemFromShop(shopId: Long, itemId: Long) {}
+    override suspend fun updateItemAdjustedPrice(shopId: Long, itemId: Long, adjustedPrice: Price) {
+        throw NotImplementedError()
+    }
     override suspend fun updateItemQuantity(shopId: Long, itemId: Long, quantity: Int?) {}
     override suspend fun replaceInventory(shopId: Long, items: List<ShopInventoryItem>) {}
 }

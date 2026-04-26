@@ -46,7 +46,7 @@ class CatalogTest {
     @Test
     fun `every catalog item has a positive price`() {
         ItemCatalog.items.forEach { item ->
-            assertTrue(item.priceCopper > 0, "Price for '${item.name}' should be positive, got ${item.priceCopper}")
+            assertTrue(item.priceAmount > 0, "Price for '${item.name}' should be positive, got ${item.priceAmount}")
         }
     }
 
@@ -94,9 +94,10 @@ class CatalogTest {
     fun `common items are priced within guideline range`() {
         val commonItems = ItemCatalog.byRarity(Rarity.Common)
         commonItems.forEach { item ->
+            val cp = item.priceAmount.toLong() * item.priceDenomination.copperValue
             assertTrue(
-                item.priceCopper in 1..5_000,
-                "Common item '${item.name}' price ${item.priceCopper} CP is outside range 1-5000 CP"
+                cp in 1..5_000,
+                "Common item '${item.name}' price $cp CP is outside range 1-5000 CP"
             )
         }
     }
@@ -105,9 +106,10 @@ class CatalogTest {
     fun `uncommon items are priced within guideline range`() {
         val uncommonItems = ItemCatalog.byRarity(Rarity.Uncommon)
         uncommonItems.forEach { item ->
+            val cp = item.priceAmount.toLong() * item.priceDenomination.copperValue
             assertTrue(
-                item.priceCopper in 5_000..50_000,
-                "Uncommon item '${item.name}' price ${item.priceCopper} CP is outside range 5000-50000 CP"
+                cp in 5_000..50_000,
+                "Uncommon item '${item.name}' price $cp CP is outside range 5000-50000 CP"
             )
         }
     }
@@ -116,9 +118,10 @@ class CatalogTest {
     fun `rare items are priced within guideline range`() {
         val rareItems = ItemCatalog.byRarity(Rarity.Rare)
         rareItems.forEach { item ->
+            val cp = item.priceAmount.toLong() * item.priceDenomination.copperValue
             assertTrue(
-                item.priceCopper in 50_000..500_000,
-                "Rare item '${item.name}' price ${item.priceCopper} CP is outside range 50000-500000 CP"
+                cp in 50_000..500_000,
+                "Rare item '${item.name}' price $cp CP is outside range 50000-500000 CP"
             )
         }
     }
@@ -127,9 +130,10 @@ class CatalogTest {
     fun `very rare items are priced within guideline range`() {
         val veryRareItems = ItemCatalog.byRarity(Rarity.VeryRare)
         veryRareItems.forEach { item ->
+            val cp = item.priceAmount.toLong() * item.priceDenomination.copperValue
             assertTrue(
-                item.priceCopper in 500_000..5_000_000,
-                "Very Rare item '${item.name}' price ${item.priceCopper} CP is outside range 500000-5000000 CP"
+                cp in 500_000..5_000_000,
+                "Very Rare item '${item.name}' price $cp CP is outside range 500000-5000000 CP"
             )
         }
     }
@@ -138,9 +142,10 @@ class CatalogTest {
     fun `legendary items are priced at or above guideline minimum`() {
         val legendaryItems = ItemCatalog.byRarity(Rarity.Legendary)
         legendaryItems.forEach { item ->
+            val cp = item.priceAmount.toLong() * item.priceDenomination.copperValue
             assertTrue(
-                item.priceCopper >= 5_000_000,
-                "Legendary item '${item.name}' price ${item.priceCopper} CP is below 5000000 CP minimum"
+                cp >= 5_000_000,
+                "Legendary item '${item.name}' price $cp CP is below 5000000 CP minimum"
             )
         }
     }
@@ -196,7 +201,7 @@ class CatalogTest {
         domainItems.forEach { item ->
             assertFalse(item.isCustom)
             assertTrue(item.name.isNotBlank())
-            assertTrue(item.price.copperPieces > 0)
+            assertTrue(item.price.amount > 0)
         }
     }
 

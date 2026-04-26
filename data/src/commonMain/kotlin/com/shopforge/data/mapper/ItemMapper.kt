@@ -1,5 +1,6 @@
 package com.shopforge.data.mapper
 
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
 import com.shopforge.domain.model.Price
@@ -11,7 +12,7 @@ internal fun DbItem.toDomain(): Item = Item(
     name = name,
     description = description,
     category = ItemCategory.valueOf(type),
-    price = Price(price),
+    price = Price(price.toInt(), Denomination.valueOf(priceDenomination)),
     rarity = Rarity.valueOf(rarity),
     isCustom = isCustom != 0L,
 )

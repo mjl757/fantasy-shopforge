@@ -1,5 +1,6 @@
 package com.shopforge.domain.usecase
 
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.ShopType
 import kotlin.test.Test
@@ -17,7 +18,7 @@ class AddItemToShopUseCaseTest {
     fun `adds item to shop inventory`() = runTest {
         val shopId = createUseCase("Shop", ShopType.Blacksmith, null)
         val item = TestFixtures.sampleItem()
-        val adjustedPrice = Price.ofGold(16)
+        val adjustedPrice = Price(16, Denomination.Gold)
 
         useCase(shopId, item, 5, adjustedPrice)
 

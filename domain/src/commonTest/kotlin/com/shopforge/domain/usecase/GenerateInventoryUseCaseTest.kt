@@ -2,6 +2,7 @@ package com.shopforge.domain.usecase
 
 import com.shopforge.domain.model.Item
 import com.shopforge.domain.model.ItemCategory
+import com.shopforge.domain.model.Denomination
 import com.shopforge.domain.model.Price
 import com.shopforge.domain.model.Rarity
 import com.shopforge.domain.model.ShopType
@@ -37,29 +38,29 @@ class GenerateInventoryUseCaseTest {
 
     private val testCatalog = listOf(
         // Weapons (Blacksmith, Fletcher)
-        Item(1, "Longsword", null, ItemCategory.Weapon, Price.ofGold(15), Rarity.Common, false),
-        Item(2, "Shortsword", null, ItemCategory.Weapon, Price.ofGold(10), Rarity.Common, false),
-        Item(3, "Greatsword", null, ItemCategory.Weapon, Price.ofGold(50), Rarity.Uncommon, false),
-        Item(4, "Flame Tongue", "A magical flaming blade", ItemCategory.Weapon, Price.ofGold(500), Rarity.Rare, false),
-        Item(5, "Vorpal Sword", "Snicker-snack", ItemCategory.Weapon, Price.ofGold(2000), Rarity.VeryRare, false),
-        Item(6, "Holy Avenger", "A legendary blade", ItemCategory.Weapon, Price.ofGold(5000), Rarity.Legendary, false),
+        Item(1, "Longsword", null, ItemCategory.Weapon, Price(15, Denomination.Gold), Rarity.Common, false),
+        Item(2, "Shortsword", null, ItemCategory.Weapon, Price(10, Denomination.Gold), Rarity.Common, false),
+        Item(3, "Greatsword", null, ItemCategory.Weapon, Price(50, Denomination.Gold), Rarity.Uncommon, false),
+        Item(4, "Flame Tongue", "A magical flaming blade", ItemCategory.Weapon, Price(500, Denomination.Gold), Rarity.Rare, false),
+        Item(5, "Vorpal Sword", "Snicker-snack", ItemCategory.Weapon, Price(2000, Denomination.Gold), Rarity.VeryRare, false),
+        Item(6, "Holy Avenger", "A legendary blade", ItemCategory.Weapon, Price(5000, Denomination.Gold), Rarity.Legendary, false),
         // Armor (Blacksmith)
-        Item(7, "Leather Armor", null, ItemCategory.Armor, Price.ofGold(10), Rarity.Common, false),
-        Item(8, "Chain Mail", null, ItemCategory.Armor, Price.ofGold(75), Rarity.Common, false),
-        Item(9, "Plate Armor", null, ItemCategory.Armor, Price.ofGold(1500), Rarity.Uncommon, false),
-        Item(10, "Mithral Half Plate", null, ItemCategory.Armor, Price.ofGold(3000), Rarity.Rare, false),
-        Item(11, "Shield +1", null, ItemCategory.Armor, Price.ofGold(200), Rarity.Uncommon, false),
-        Item(12, "Adamantine Plate", null, ItemCategory.Armor, Price.ofGold(4000), Rarity.VeryRare, false),
-        Item(13, "Shield +3", null, ItemCategory.Armor, Price.ofGold(8000), Rarity.Legendary, false),
+        Item(7, "Leather Armor", null, ItemCategory.Armor, Price(10, Denomination.Gold), Rarity.Common, false),
+        Item(8, "Chain Mail", null, ItemCategory.Armor, Price(75, Denomination.Gold), Rarity.Common, false),
+        Item(9, "Plate Armor", null, ItemCategory.Armor, Price(1500, Denomination.Gold), Rarity.Uncommon, false),
+        Item(10, "Mithral Half Plate", null, ItemCategory.Armor, Price(3000, Denomination.Gold), Rarity.Rare, false),
+        Item(11, "Shield +1", null, ItemCategory.Armor, Price(200, Denomination.Gold), Rarity.Uncommon, false),
+        Item(12, "Adamantine Plate", null, ItemCategory.Armor, Price(4000, Denomination.Gold), Rarity.VeryRare, false),
+        Item(13, "Shield +3", null, ItemCategory.Armor, Price(8000, Denomination.Gold), Rarity.Legendary, false),
         // Potions (Alchemist, MagicShop, Temple)
-        Item(14, "Healing Potion", null, ItemCategory.Potion, Price.ofGold(50), Rarity.Common, false),
-        Item(15, "Greater Healing Potion", null, ItemCategory.Potion, Price.ofGold(100), Rarity.Uncommon, false),
+        Item(14, "Healing Potion", null, ItemCategory.Potion, Price(50, Denomination.Gold), Rarity.Common, false),
+        Item(15, "Greater Healing Potion", null, ItemCategory.Potion, Price(100, Denomination.Gold), Rarity.Uncommon, false),
         // Adventuring Gear (General Store)
-        Item(16, "Rope (50 ft)", null, ItemCategory.AdventuringGear, Price.ofGold(1), Rarity.Common, false),
-        Item(17, "Torch (10-pack)", null, ItemCategory.AdventuringGear, Price.ofSilver(1), Rarity.Common, false),
+        Item(16, "Rope (50 ft)", null, ItemCategory.AdventuringGear, Price(1, Denomination.Gold), Rarity.Common, false),
+        Item(17, "Torch (10-pack)", null, ItemCategory.AdventuringGear, Price(1, Denomination.Silver), Rarity.Common, false),
         // Ammunition (Fletcher)
-        Item(18, "Arrows (20)", null, ItemCategory.Ammunition, Price.ofGold(1), Rarity.Common, false),
-        Item(19, "Bolts (20)", null, ItemCategory.Ammunition, Price.ofGold(1), Rarity.Common, false),
+        Item(18, "Arrows (20)", null, ItemCategory.Ammunition, Price(1, Denomination.Gold), Rarity.Common, false),
+        Item(19, "Bolts (20)", null, ItemCategory.Ammunition, Price(1, Denomination.Gold), Rarity.Common, false),
     )
 
     private fun createUseCase(
@@ -146,25 +147,29 @@ class GenerateInventoryUseCaseTest {
             val useCase = createUseCase(random = Random(seed))
             val result = useCase.invoke(ShopType.Blacksmith)
             result.forEach { inventoryItem ->
-                val baseCp = inventoryItem.item.price.copperPieces
-                val adjustedCp = inventoryItem.adjustedPrice.copperPieces
-                val lowerBound = (baseCp * 0.90).toLong()
-                val upperBound = (baseCp * 1.10).toLong() + 1 // +1 for rounding tolerance
+                val baseAmount = inventoryItem.item.price.amount
+                val adjustedAmount = inventoryItem.adjustedPrice.amount
+                val lowerBound = (baseAmount * 0.90).toInt()
+                val upperBound = (baseAmount * 1.10).toInt() + 1 // +1 for rounding tolerance
+                assertEquals(
+                    inventoryItem.item.price.denomination,
+                    inventoryItem.adjustedPrice.denomination,
+                    "Denomination should not change for '${inventoryItem.item.name}'"
+                )
                 assertTrue(
-                    adjustedCp in lowerBound..upperBound,
-                    "Price $adjustedCp CP not within ±10% of base $baseCp CP for '${inventoryItem.item.name}'"
+                    adjustedAmount in lowerBound..upperBound,
+                    "Price $adjustedAmount not within ±10% of base $baseAmount for '${inventoryItem.item.name}'"
                 )
             }
         }
     }
 
     @Test
-    fun `price variance rounds to nearest copper piece`() = runTest {
+    fun `price variance keeps amount at least 1`() = runTest {
         val useCase = createUseCase(random = Random(42))
         val result = useCase.invoke(ShopType.Blacksmith)
         result.forEach { inventoryItem ->
-            // Price is always stored as whole copper pieces
-            assertTrue(inventoryItem.adjustedPrice.copperPieces >= 1)
+            assertTrue(inventoryItem.adjustedPrice.amount >= 1)
         }
     }
 
